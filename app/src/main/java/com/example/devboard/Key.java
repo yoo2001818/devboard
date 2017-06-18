@@ -9,13 +9,15 @@ public class Key {
     // string to resource ID - it needs to be portable. :/
     String label;
     int code;
+    String extra;
 
     public Key() {
     }
 
-    public Key(String label, int code) {
+    public Key(String label, int code, String extra) {
         this.label = label;
         this.code = code;
+        this.extra = extra;
     }
 
     public String getLabel() {
@@ -34,11 +36,20 @@ public class Key {
         this.code = code;
     }
 
+    public String getExtra() {
+        return extra;
+    }
+
+    public void setExtra(String extra) {
+        this.extra = extra;
+    }
+
     @Override
     public String toString() {
         return "Key{" +
                 "label='" + label + '\'' +
                 ", code=" + code +
+                ", extra='" + extra + '\'' +
                 '}';
     }
 }

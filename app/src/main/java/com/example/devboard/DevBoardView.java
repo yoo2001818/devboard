@@ -2,7 +2,10 @@ package com.example.devboard;
 
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.os.Handler;
 import android.util.AttributeSet;
+import android.view.MotionEvent;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -19,7 +22,7 @@ import java.util.List;
  * Created by yoo2001818 on 17. 6. 18.
  */
 
-public class DevBoardView extends LinearLayout {
+public class DevBoardView extends LinearLayout implements View.OnClickListener, View.OnTouchListener, View.OnLongClickListener {
 
     // The keyboard table is hardcoded - it's not supposed to change whatsoever!
     public static final float[][] LAYOUT_TABLE = new float[][] {
@@ -29,11 +32,14 @@ public class DevBoardView extends LinearLayout {
             new float[] { 1, 1, 1, 4, 1, 1, 1 },
     };
 
+    private Handler handler;
     private AttributeSet attrs;
+    private Listener listener;
 
     protected KeyLayout keyLayout;
     protected LinearLayout[] rows;
     protected Button[] buttons;
+    protected Runnable[] runnables;
 
     public DevBoardView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -64,6 +70,7 @@ public class DevBoardView extends LinearLayout {
             }
         }
         buttons = new Button[keyTableSize];
+        runnables = new Runnable[keyTableSize];
         int counter = 0;
         int yCounter = 0;
         for (float[] layoutRow : LAYOUT_TABLE) {
@@ -76,6 +83,10 @@ public class DevBoardView extends LinearLayout {
                     Button button = new Button(getContext(), null, R.attr.imeButtonStyle);
                     col.addView(button, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, layoutCol));
                     button.setText(Integer.toString(counter));
+                    button.setId(counter);
+                    button.setOnClickListener(this);
+                    button.setOnTouchListener(this);
+                    button.setOnLongClickListener(this);
                     buttons[counter] = button;
                     counter += 1;
                 } else {
@@ -104,5 +115,55 @@ public class DevBoardView extends LinearLayout {
             buttons[counter].setText(key.getLabel());
             counter += 1;
         }
+    }
+
+    @Override
+    public void onClick(View view) {
+        Key key = keyLayout.getLayout().get(view.getId());
+        if (listener != null) listener.onKey(key);
+    }
+
+    @Override
+    public boolean onTouch(View view, MotionEvent motionEvent) {
+        Key key = keyLayout.getLayout().get(view.getId());
+        int id = view.getId();
+        // Do not digest the event - underlying button should listen to this
+        if (motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
+            if (listener != null) listener.onPress(key);
+        } else if (motionEvent.getAction() == MotionEvent.ACTION_UP) {
+            if (runnables[id] != null) {
+                getHandler().removeCallbacks(runnables[id]);
+                runnables[id] = null;
+            }
+            if (listener != null) listener.onRelease(key);
+        }
+        return false;
+    }
+
+    @Override
+    public boolean onLongClick(View view) {
+        // I hate Java.
+        final int id = view.getId();
+        final Key key = keyLayout.getLayout().get(view.getId());
+        if (runnables[id] != null) throw new RuntimeException("Runnable " + id + " is already present; this should not happen");
+        runnables[id] = new Runnable() {
+            @Override
+            public void run() {
+                if (listener != null) listener.onKey(key);
+                getHandler().postDelayed(runnables[id], 50);
+            }
+        };
+        runnables[id].run();
+        return true;
+    }
+
+    public void setListener(Listener listener) {
+        this.listener = listener;
+    }
+
+    public interface Listener {
+        void onPress(Key key);
+        void onRelease(Key key);
+        void onKey(Key key);
     }
 }

@@ -28,6 +28,13 @@
     { "code": 110, "label": "N" },
     { "code": 109, "label": "M" },
     { "code": 46, "label": "." },
-    { "code": -5, "label": "Backspace" }
+    { "code": -5, "label": "Backspace" },
+    { "code": 97, "label": "깔" },
+    { "code": 97, "label": "깔" },
+    { "code": 97, "label": "깔" },
+    { "code": 32, "label": " " },
+    { "code": 97, "label": "깔" },
+    { "code": 97, "label": "깔" },
+    { "code": 97, "label": "깔" }
   ]
 }

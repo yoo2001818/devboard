@@ -4,6 +4,7 @@ import android.inputmethodservice.InputMethodService;
 import android.inputmethodservice.Keyboard;
 import android.inputmethodservice.KeyboardView;
 import android.text.InputType;
+import android.view.ContextThemeWrapper;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.CompletionInfo;
@@ -15,10 +16,10 @@ import android.view.inputmethod.InputMethodSubtype;
  * Created by Sunrin on 2017-06-13.
  */
 
-public class DevBoardIME extends InputMethodService implements KeyboardView.OnKeyboardActionListener {
+public class DevBoardIME extends InputMethodService implements DevBoardView.Listener {
 
     StringBuilder composeQueue = new StringBuilder();
-    KeyboardView inputView;
+    DevBoardView inputView;
 
     @Override
     public void onInitializeInterface() {
@@ -27,9 +28,8 @@ public class DevBoardIME extends InputMethodService implements KeyboardView.OnKe
 
     @Override
     public View onCreateInputView() {
-        KeyboardView view = new KeyboardView(null, null);
-        view.setOnKeyboardActionListener(this);
-        view.setKeyboard(new Keyboard(this, R.xml.qwerty));
+        DevBoardView view = new DevBoardView(new ContextThemeWrapper(getApplicationContext(), R.style.AppTheme));
+        view.setListener(this);
         inputView = view;
         return view;
     }
@@ -44,7 +44,7 @@ public class DevBoardIME extends InputMethodService implements KeyboardView.OnKe
     public void onFinishInput() {
         super.onFinishInput();
         composeQueue.setLength(0);
-        if (inputView != null) inputView.closing();
+        // if (inputView != null) inputView.closing();
     }
 
 
@@ -73,12 +73,12 @@ public class DevBoardIME extends InputMethodService implements KeyboardView.OnKe
         switch (keyCode) {
             case KeyEvent.KEYCODE_BACK:
                 if (event.getRepeatCount() == 0 && inputView == null) {
-                    if(inputView.handleBack()) return true;
+                    // if(inputView.handleBack()) return true;
                 }
                 break;
             case KeyEvent.KEYCODE_DEL:
                 if (composeQueue.length() > 0) {
-                    onKey(Keyboard.KEYCODE_DELETE, null);
+                    onKey(new Key("BKSP", Keyboard.KEYCODE_DELETE, null));
                     return true;
                 }
                 break;
@@ -109,7 +109,7 @@ public class DevBoardIME extends InputMethodService implements KeyboardView.OnKe
             if (ei != null && ei.inputType != InputType.TYPE_NULL) {
                 caps = getCurrentInputConnection().getCursorCapsMode(attr.inputType);
             }
-            inputView.setShifted(caps != 0);
+            // inputView.setShifted(caps != 0);
         }
     }
 
@@ -150,27 +150,28 @@ public class DevBoardIME extends InputMethodService implements KeyboardView.OnKe
     }
 
     private void handleShift() {
-        inputView.setShifted(!inputView.isShifted());
+        // inputView.setShifted(!inputView.isShifted());
     }
 
     private void handleClose() {
         commitTyped(getCurrentInputConnection());
         requestHideSelf(0);
-        inputView.closing();
+        // inputView.closing();
     }
 
     @Override
-    public void onPress(int primaryCode) {
-
-    }
-
-    @Override
-    public void onRelease(int primaryCode) {
+    public void onPress(Key key) {
 
     }
 
     @Override
-    public void onKey(int primaryCode, int[] keyCodes) {
+    public void onRelease(Key key) {
+
+    }
+
+    @Override
+    public void onKey(Key key) {
+        int primaryCode = key.getCode();
         if (primaryCode == ' ') {
             commitTyped(getCurrentInputConnection());
             sendKey(primaryCode);
@@ -182,43 +183,10 @@ public class DevBoardIME extends InputMethodService implements KeyboardView.OnKe
         } else if (primaryCode == Keyboard.KEYCODE_CANCEL) {
             handleClose();
         } else {
-            if (inputView.isShifted()) primaryCode = Character.toUpperCase(primaryCode);
+            // if (inputView.isShifted()) primaryCode = Character.toUpperCase(primaryCode);
             composeQueue.append((char) primaryCode);
             getCurrentInputConnection().setComposingText(composeQueue, 1);
             updateShiftKey(getCurrentInputEditorInfo());
         }
-    }
-
-    @Override
-    public void onText(CharSequence text) {
-        InputConnection ic = getCurrentInputConnection();
-        if (ic == null) return;
-        ic.beginBatchEdit();
-        if (composeQueue.length() > 0) {
-            commitTyped(ic);
-        }
-        ic.commitText(text, 0);
-        ic.endBatchEdit();
-        updateShiftKey(getCurrentInputEditorInfo());
-    }
-
-    @Override
-    public void swipeLeft() {
-
-    }
-
-    @Override
-    public void swipeRight() {
-
-    }
-
-    @Override
-    public void swipeDown() {
-
-    }
-
-    @Override
-    public void swipeUp() {
-
     }
 }

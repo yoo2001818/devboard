@@ -3,6 +3,7 @@
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
-    <color name="buttonRelease">#FFFFFF</color>
-    <color name="buttonClick">#FF0000</color>
+    <color name="buttonRelease">#37474f</color>
+    <color name="buttonClick">#455a64</color>
+    <color name="buttonText">#cfd8dc</color>
 </resources>
