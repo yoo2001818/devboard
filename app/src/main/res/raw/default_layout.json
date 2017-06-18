@@ -1,0 +1,33 @@
+{
+  "layout": [
+    { "code": 113, "label": "Q" },
+    { "code": 119, "label": "W" },
+    { "code": 101, "label": "E" },
+    { "code": 114, "label": "R" },
+    { "code": 116, "label": "T" },
+    { "code": 121, "label": "Y" },
+    { "code": 117, "label": "U" },
+    { "code": 105, "label": "I" },
+    { "code": 111, "label": "O" },
+    { "code": 112, "label": "P" },
+    { "code": 97, "label": "A" },
+    { "code": 115, "label": "S" },
+    { "code": 100, "label": "D" },
+    { "code": 102, "label": "F" },
+    { "code": 103, "label": "G" },
+    { "code": 104, "label": "H" },
+    { "code": 106, "label": "J" },
+    { "code": 107, "label": "K" },
+    { "code": 108, "label": "L" },
+    { "code": -1, "label": "Shift" },
+    { "code": 122, "label": "Z" },
+    { "code": 120, "label": "X" },
+    { "code": 99, "label": "C" },
+    { "code": 118, "label": "V" },
+    { "code": 98, "label": "B" },
+    { "code": 110, "label": "N" },
+    { "code": 109, "label": "M" },
+    { "code": 46, "label": "." },
+    { "code": -5, "label": "Backspace" }
+  ]
+}
