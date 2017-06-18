@@ -43,6 +43,7 @@ public class DevBoardView extends LinearLayout implements View.OnClickListener, 
 
     public DevBoardView(Context context, AttributeSet attrs) {
         super(context, attrs);
+        this.setLayoutParams(new ViewGroup.LayoutParams(this.getContext(), attrs));
         this.attrs = attrs;
         this.createLayout();
     }
@@ -56,9 +57,19 @@ public class DevBoardView extends LinearLayout implements View.OnClickListener, 
         this.createLayout();
     }
 
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+        // Use the height from attributes...
+        TypedArray a = getContext().obtainStyledAttributes(attrs, R.styleable.DevBoardView);
+        setMeasuredDimension(widthMeasureSpec, a.getDimensionPixelSize(R.styleable.DevBoardView_imeHeight, 100));
+        a.recycle();
+    }
+
     private void createLayout() {
         TypedArray a = getContext().obtainStyledAttributes(attrs, R.styleable.DevBoardView);
         this.setBackgroundColor(a.getColor(R.styleable.DevBoardView_imeBackground, 0));
+        a.recycle();
         this.setOrientation(VERTICAL);
         // Create layout according to the layout table.
         rows = new LinearLayout[LAYOUT_TABLE.length];
