@@ -27,7 +27,7 @@ public class DevBoardIME extends InputMethodService implements KeyboardView.OnKe
 
     @Override
     public View onCreateInputView() {
-        KeyboardView view = (KeyboardView) getLayoutInflater().inflate(R.layout.ime, null);
+        KeyboardView view = new KeyboardView(null, null);
         view.setOnKeyboardActionListener(this);
         view.setKeyboard(new Keyboard(this, R.xml.qwerty));
         inputView = view;
