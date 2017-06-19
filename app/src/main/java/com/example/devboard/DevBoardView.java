@@ -36,7 +36,7 @@ public class DevBoardView extends LinearLayout implements View.OnClickListener, 
     private AttributeSet attrs;
     private Listener listener;
 
-    protected KeyLayout keyLayout;
+    protected List<Key> keyLayout;
     protected LinearLayout[] rows;
     protected Button[] buttons;
     protected Runnable[] runnables;
@@ -55,6 +55,15 @@ public class DevBoardView extends LinearLayout implements View.OnClickListener, 
                 ViewGroup.LayoutParams.MATCH_PARENT
         ));
         this.createLayout();
+    }
+
+    public List<Key> getKeyLayout() {
+        return keyLayout;
+    }
+
+    public void setKeyLayout(List<Key> keyLayout) {
+        this.keyLayout = keyLayout;
+        this.updateLayout();
     }
 
     @Override
@@ -113,14 +122,16 @@ public class DevBoardView extends LinearLayout implements View.OnClickListener, 
 
     private void updateLayout() {
         // TODO Move to somewhere else
-        try {
-            Reader reader = new BufferedReader(new InputStreamReader(getResources().openRawResource(R.raw.default_layout), "UTF-8"));
-            Gson gson = new Gson();
-            this.keyLayout = gson.fromJson(reader, KeyLayout.class);
-        } catch (UnsupportedEncodingException e) {
-            // This shouldn't happen
+        if (keyLayout == null) {
+            try {
+                Reader reader = new BufferedReader(new InputStreamReader(getResources().openRawResource(R.raw.default_layout), "UTF-8"));
+                Gson gson = new Gson();
+                this.keyLayout = gson.fromJson(reader, KeyLayout.class).getLayout();
+            } catch (UnsupportedEncodingException e) {
+                // This shouldn't happen
+            }
         }
-        List<Key> keys = keyLayout.getLayout();
+        List<Key> keys = keyLayout;
         int counter = 0;
         for (Key key : keys) {
             buttons[counter].setText(key.getLabel());
@@ -130,23 +141,23 @@ public class DevBoardView extends LinearLayout implements View.OnClickListener, 
 
     @Override
     public void onClick(View view) {
-        Key key = keyLayout.getLayout().get(view.getId());
-        if (listener != null) listener.onKey(key);
+        Key key = keyLayout.get(view.getId());
+        if (listener != null) listener.onKey(view.getId(), key);
     }
 
     @Override
     public boolean onTouch(View view, MotionEvent motionEvent) {
-        Key key = keyLayout.getLayout().get(view.getId());
+        Key key = keyLayout.get(view.getId());
         int id = view.getId();
         // Do not digest the event - underlying button should listen to this
         if (motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
-            if (listener != null) listener.onPress(key);
+            if (listener != null) listener.onPress(id, key);
         } else if (motionEvent.getAction() == MotionEvent.ACTION_UP) {
             if (runnables[id] != null) {
                 getHandler().removeCallbacks(runnables[id]);
                 runnables[id] = null;
             }
-            if (listener != null) listener.onRelease(key);
+            if (listener != null) listener.onRelease(id, key);
         }
         return false;
     }
@@ -155,12 +166,12 @@ public class DevBoardView extends LinearLayout implements View.OnClickListener, 
     public boolean onLongClick(View view) {
         // I hate Java.
         final int id = view.getId();
-        final Key key = keyLayout.getLayout().get(view.getId());
+        final Key key = keyLayout.get(view.getId());
         if (runnables[id] != null) throw new RuntimeException("Runnable " + id + " is already present; this should not happen");
         runnables[id] = new Runnable() {
             @Override
             public void run() {
-                if (listener != null) listener.onKey(key);
+                if (listener != null) listener.onKey(id, key);
                 getHandler().postDelayed(runnables[id], 50);
             }
         };
@@ -173,8 +184,8 @@ public class DevBoardView extends LinearLayout implements View.OnClickListener, 
     }
 
     public interface Listener {
-        void onPress(Key key);
-        void onRelease(Key key);
-        void onKey(Key key);
+        void onPress(int id, Key key);
+        void onRelease(int id, Key key);
+        void onKey(int id, Key key);
     }
 }

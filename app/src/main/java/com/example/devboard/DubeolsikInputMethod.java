@@ -1,5 +1,8 @@
 package com.example.devboard;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Created by yoo2001818 on 17. 6. 19.
  */
@@ -22,6 +25,9 @@ public class DubeolsikInputMethod implements CJKInputMethod {
     protected static final String[] END_CONV = ",r,R,rt,s,sw,sg,e,f,fr,fa,fq,ft,fx,fv,fg,a,q,qt,t,T,d,w,c,z,x,v,g".split(",");
     protected static final char[] VOWEL_CONV = "yuiophjklbnm".toCharArray();
     protected static final char[] CONSONANT_CONV = "qwertasdfgzxcv".toCharArray();
+
+    protected static final char[] CONVERT_CHARS = "ㅂㅈㄷㄱㅅㅛㅕㅑㅐㅔㅁㄴㅇㄹㅎㅗㅓㅏㅣ\0ㅋㅌㅊㅍㅠㅜㅡ\0".toCharArray();
+    protected static final char[] CONVERT_SHIFT_CHARS = "ㅃㅉㄸㄲㅆㅛㅕㅑㅒㅖㅁㄴㅇㄹㅎㅗㅓㅏㅣ\0ㅋㅌㅊㅍㅠㅜㅡ\0".toCharArray();
 
     private int startCode = -1;
     private int middleCode = -1;
@@ -102,6 +108,7 @@ public class DubeolsikInputMethod implements CJKInputMethod {
         queue.append(getChar());
     }
 
+    @Override
     public boolean processDevboard(int position, boolean shift) {
         if (position >= RAW_KEY_MAP.length) return false;
         char input = RAW_KEY_MAP[position];
@@ -201,5 +208,35 @@ public class DubeolsikInputMethod implements CJKInputMethod {
         char temp = this.getChar();
         if (temp == '\0') return this.queue.toString();
         return this.queue.toString() + temp;
+    }
+
+    @Override
+    public List<Key> getLayout(List<Key> original) {
+        // Just convert them using a table.
+        List<Key> output = new ArrayList<>();
+        for (int i = 0; i < original.size(); ++i) {
+            Key key = original.get(i);
+            if (i < CONVERT_CHARS.length && CONVERT_CHARS[i] != 0) {
+                output.add(new Key(Character.toString(CONVERT_CHARS[i]), key.getCode(), key.getExtra()));
+            } else {
+                output.add(key);
+            }
+        }
+        return output;
+    }
+
+    @Override
+    public List<Key> getLayoutShift(List<Key> original) {
+        // Bleh.
+        List<Key> output = new ArrayList<>();
+        for (int i = 0; i < original.size(); ++i) {
+            Key key = original.get(i);
+            if (i < CONVERT_SHIFT_CHARS.length && CONVERT_SHIFT_CHARS[i] != 0) {
+                output.add(new Key(Character.toString(CONVERT_SHIFT_CHARS[i]), key.getCode(), key.getExtra()));
+            } else {
+                output.add(key);
+            }
+        }
+        return output;
     }
 }
