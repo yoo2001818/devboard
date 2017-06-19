@@ -31,6 +31,11 @@ public class NoopInputMethod implements CJKInputMethod {
     }
 
     @Override
+    public boolean backspace() {
+        return false;
+    }
+
+    @Override
     public String getCurrent() {
         return "";
     }

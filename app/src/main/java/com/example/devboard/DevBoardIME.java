@@ -232,13 +232,22 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
     }
 
     private void handleBackspace() {
+        InputConnection ic = getCurrentInputConnection();
+        if (getInputMethod().backspace()) {
+            // The IME has spoken that it has processed backspace by itself - horray!
+            // ... Set the composing text to IME's buffer.
+            String current = getInputMethod().getCurrent();
+            ic.setComposingText(current, 1);
+            updateShiftKey(getCurrentInputEditorInfo());
+            return;
+        }
         int length = composeQueue.length();
         if (length > 1) {
             composeQueue.delete(length - 1, length);
-            getCurrentInputConnection().setComposingText(composeQueue, 1);
+            ic.setComposingText(composeQueue, 1);
         } else if (length > 0) {
             composeQueue.setLength(0);
-            getCurrentInputConnection().setComposingText("", 0);
+            ic.setComposingText("", 0);
         } else {
             keyDownUp(KeyEvent.KEYCODE_DEL);
         }
@@ -249,6 +258,14 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
         commitTyped(getCurrentInputConnection());
         requestHideSelf(0);
         // inputView.closing();
+    }
+
+    private void commitIME() {
+        // If input method's buffer is not empty, commit it.
+        String current = getInputMethod().finish();
+        if (current.length() > 0) {
+            getCurrentInputConnection().commitText(current, current.length());
+        }
     }
 
     @Override
@@ -275,25 +292,43 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
 
     @Override
     public void onKey(int id, Key key) {
-        // TODO Intercept to IME first
+        InputConnection ic = getCurrentInputConnection();
+        // Intercept to IME first.
+        if (getInputMethod().processDevboard(id, isShift)) {
+            // If this is the first time and the buffer is not empty, commit already existing buffer.
+            if (composeQueue.length() > 0) {
+                commitTyped(ic);
+            }
+            // ... Set the composing text to IME's buffer.
+            String current = getInputMethod().getCurrent();
+            ic.setComposingText(current, current.length());
+            return;
+        }
         int primaryCode = key.getCode();
         if (primaryCode == ' ') {
-            commitTyped(getCurrentInputConnection());
+            commitIME();
+            commitTyped(ic);
             sendKey(primaryCode);
             updateShiftKey(getCurrentInputEditorInfo());
+        } else if (primaryCode == '\n') {
+            commitIME();
+            commitTyped(ic);
+            sendKey(primaryCode);
         } else if (primaryCode == KEYCODE_BACKSPACE) {
             handleBackspace();
         } else if (primaryCode == KEYCODE_SHIFT) {
             // handleShift();
         } else if (primaryCode == KEYCODE_LOCALE) {
+            commitIME();
             currentMethod = (currentMethod + 1) % methods.length;
             updateLayout();
         // } else if (primaryCode == Keyboard.KEYCODE_CANCEL) {
         //    handleClose();
         } else {
+            commitIME();
             // if (inputView.isShifted()) primaryCode = Character.toUpperCase(primaryCode);
             composeQueue.append((char) primaryCode);
-            getCurrentInputConnection().setComposingText(composeQueue, 1);
+            ic.setComposingText(composeQueue, 1);
             updateShiftKey(getCurrentInputEditorInfo());
         }
     }

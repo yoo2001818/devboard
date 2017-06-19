@@ -9,6 +9,7 @@ import java.util.List;
 public interface CJKInputMethod {
     void reset();
     String finish();
+    boolean backspace();
     boolean processDevboard(int position, boolean shift);
     boolean process(int charCode);
     String getCurrent();

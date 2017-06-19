@@ -1,5 +1,7 @@
 package com.example.devboard;
 
+import android.util.Log;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,6 +35,7 @@ public class DubeolsikInputMethod implements CJKInputMethod {
     private int middleCode = -1;
     private int endCode = 0;
     private StringBuilder queue = new StringBuilder();
+    private StringBuilder latinQueue = new StringBuilder();
 
     // Why doesn't Java provide this by default? Also, I hate primitive types.
     private static int indexOf(char needle, char[] haystack) {
@@ -74,7 +77,9 @@ public class DubeolsikInputMethod implements CJKInputMethod {
     private int getEndIndex(String code) {
         int orig = indexOf(code, END_CONV);
         if (orig != -1) return orig;
-        return indexOf(code.toLowerCase(), END_CONV);
+        orig = indexOf(code.toLowerCase(), END_CONV);
+        if (orig != -1) return orig;
+        return 0;
     }
 
     private char createHangul(int start, int middle, int end) {
@@ -129,9 +134,10 @@ public class DubeolsikInputMethod implements CJKInputMethod {
             this.reset();
             return false;
         }
+        latinQueue.append(charStr);
         // Digest the character!
         if (isConsonant(charCode)) {
-            if(startCode == -1) {
+            if (startCode == -1) {
                 // Start code is not set yet
                 startCode = getStartIndex(charStr);
             } else if (this.middleCode == -1) {
@@ -195,11 +201,36 @@ public class DubeolsikInputMethod implements CJKInputMethod {
     }
 
     @Override
+    public boolean backspace() {
+        // No!!!!!!!! This is not possible without using a stack.
+        // https://www.youtube.com/watch?v=umDr0mPuyQc
+        // ..... Anyway, we can use two methods!
+        // 1) Use StringBuilder to store raw char values, and process all of them again everytime.
+        // 2) Store each char's state - record if the completed character has been published -
+        //    while restoring, check the flag and delete StringBuffer's each character.
+        // We'll use the first method due to its simplicity.
+        if (latinQueue.length() == 0) return false;
+        this.pushQueue();
+        this.reset();
+        this.queue.setLength(0);
+        char[] reprocessed = latinQueue.toString().toCharArray();
+        latinQueue.setLength(0);
+        // Heh.
+        for (int i = 0; i < reprocessed.length - 1; ++i) {
+            char c = reprocessed[i];
+            process(c);
+        }
+
+        return true;
+    }
+
+    @Override
     public String finish() {
         this.pushQueue();
         this.reset();
         String output = this.queue.toString();
         this.queue.setLength(0);
+        latinQueue.setLength(0);
         return output;
     }
 

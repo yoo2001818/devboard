@@ -35,6 +35,6 @@
     { "code": 32, "label": " " },
     { "code": 97, "label": "깔" },
     { "code": 97, "label": "깔" },
-    { "code": 97, "label": "깔" }
+    { "code": 10, "label": "Return" }
   ]
 }
