@@ -35,7 +35,6 @@ public class DubeolsikInputMethod implements CJKInputMethod {
     private int middleCode = -1;
     private int endCode = 0;
     private StringBuilder queue = new StringBuilder();
-    private StringBuilder latinQueue = new StringBuilder();
 
     // Why doesn't Java provide this by default? Also, I hate primitive types.
     private static int indexOf(char needle, char[] haystack) {
@@ -110,7 +109,8 @@ public class DubeolsikInputMethod implements CJKInputMethod {
     }
 
     public void pushQueue() {
-        queue.append(getChar());
+        char output = getChar();
+        if (output != 0) queue.append(output);
     }
 
     @Override
@@ -119,7 +119,7 @@ public class DubeolsikInputMethod implements CJKInputMethod {
         char input = RAW_KEY_MAP[position];
         if (input == 0) return false;
         // This is absurd.
-        if (shift) input = (char)(input - 'a' + 'A');
+        if (shift) input = Character.toUpperCase(input);
         return process(input);
     }
 
@@ -134,9 +134,8 @@ public class DubeolsikInputMethod implements CJKInputMethod {
             this.reset();
             return false;
         }
-        latinQueue.append(charStr);
         // Digest the character!
-        if (isConsonant(charCode)) {
+        if (isConsonant(Character.toLowerCase(charCode))) {
             if (startCode == -1) {
                 // Start code is not set yet
                 startCode = getStartIndex(charStr);
@@ -158,7 +157,7 @@ public class DubeolsikInputMethod implements CJKInputMethod {
                     this.endCode = endTemp;
                 }
             }
-        } else if (isVowel(charCode)) {
+        } else if (isVowel(Character.toLowerCase(charCode))) {
             if (this.endCode == 0) {
                 // Set middle code
                 int middleTemp;
@@ -202,25 +201,30 @@ public class DubeolsikInputMethod implements CJKInputMethod {
 
     @Override
     public boolean backspace() {
-        // No!!!!!!!! This is not possible without using a stack.
         // https://www.youtube.com/watch?v=umDr0mPuyQc
         // ..... Anyway, we can use two methods!
         // 1) Use StringBuilder to store raw char values, and process all of them again everytime.
         // 2) Store each char's state - record if the completed character has been published -
         //    while restoring, check the flag and delete StringBuffer's each character.
         // We'll use the first method due to its simplicity.
-        if (latinQueue.length() == 0) return false;
-        this.pushQueue();
-        this.reset();
-        this.queue.setLength(0);
-        char[] reprocessed = latinQueue.toString().toCharArray();
-        latinQueue.setLength(0);
-        // Heh.
-        for (int i = 0; i < reprocessed.length - 1; ++i) {
-            char c = reprocessed[i];
-            process(c);
+        // EDIT: If a character has already processed, it can be deleted without rebuilding their
+        // internal state - that is, we only have to touch end / middle / start code, whichever
+        // comes first.
+        if (endCode != 0) {
+            endCode = 0;
+            return true;
         }
-
+        if (middleCode != -1) {
+            middleCode = -1;
+            return true;
+        }
+        if (startCode != -1) {
+            startCode = -1;
+            return true;
+        }
+        // Otherwise, delete each character from output buffer.
+        if (queue.length() == 0) return false;
+        queue.setLength(queue.length() - 1);
         return true;
     }
 
@@ -230,7 +234,6 @@ public class DubeolsikInputMethod implements CJKInputMethod {
         this.reset();
         String output = this.queue.toString();
         this.queue.setLength(0);
-        latinQueue.setLength(0);
         return output;
     }
 
