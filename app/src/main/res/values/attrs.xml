@@ -3,6 +3,7 @@
     <declare-styleable name="DevBoardView">
         <attr name="imeBackground" format="color" />
         <attr name="imeHeight" format="dimension" />
+        <attr name="imeImageSize" format="dimension" />
         <attr name="imeButtonStyle" format="reference" />
     </declare-styleable>
 </resources>

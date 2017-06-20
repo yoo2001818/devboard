@@ -110,7 +110,7 @@
       { "code": -2, "label": "Backspace" },
       { "code": -4, "label": "Fn" },
       { "code": -5, "label": "Fn2" },
-      { "code": 0, "label": "Options" },
+      { "code": 0, "label": "Option" },
       { "code": 32, "label": " " },
       { "code": 0, "label": "Emoji" },
       { "code": -4, "label": "Fn2" },

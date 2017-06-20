@@ -2,6 +2,8 @@ package com.example.devboard;
 
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.ScaleDrawable;
 import android.os.Handler;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
@@ -66,14 +68,21 @@ public class DevBoardView extends LinearLayout implements View.OnClickListener, 
         this.updateLayout();
     }
 
+    private int getKeyHeight() {
+        TypedArray a = getContext().obtainStyledAttributes(attrs, R.styleable.DevBoardView);
+        int height = a.getDimensionPixelSize(R.styleable.DevBoardView_imeHeight, 100);
+        a.recycle();
+        return height / LAYOUT_TABLE.length;
+    }
+
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         // Use the height from attributes...
         TypedArray a = getContext().obtainStyledAttributes(attrs, R.styleable.DevBoardView);
-        int spec = a.getDimensionPixelSize(R.styleable.DevBoardView_imeHeight, 100);
+        int height = a.getDimensionPixelSize(R.styleable.DevBoardView_imeHeight, 100);
         a.recycle();
-        super.onMeasure(widthMeasureSpec, spec);
-        setMeasuredDimension(widthMeasureSpec, spec);
+        super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY));
+        setMeasuredDimension(MeasureSpec.getSize(widthMeasureSpec), height);
     }
 
     private void createLayout() {
@@ -121,6 +130,24 @@ public class DevBoardView extends LinearLayout implements View.OnClickListener, 
         this.updateLayout();
     }
 
+    private void setButtonDrawable(Button button, int resourceId) {
+        TypedArray a = getContext().obtainStyledAttributes(attrs, R.styleable.DevBoardView);
+        int iconSize = a.getDimensionPixelSize(R.styleable.DevBoardView_imeImageSize, 0);
+        a.recycle();
+
+        Drawable drawable = getResources().getDrawable(resourceId);
+        drawable.setBounds(0, 0, iconSize * 2, iconSize * 2);
+        button.setPadding(0, (getKeyHeight() - iconSize * 2) / 2, 0, 0);
+        button.setCompoundDrawables(null, drawable, null, null);
+        button.setText("");
+    }
+
+    private void setButtonText(Button button, String text) {
+        button.setPadding(0, 0, 0, 0);
+        button.setCompoundDrawables(null, null, null, null);
+        button.setText(text);
+    }
+
     private void updateLayout() {
         // TODO Move to somewhere else
         if (keyLayout == null) {
@@ -135,7 +162,44 @@ public class DevBoardView extends LinearLayout implements View.OnClickListener, 
         List<Key> keys = keyLayout;
         int counter = 0;
         for (Key key : keys) {
-            buttons[counter].setText(key.getLabel());
+            switch (key.getLabel()) {
+                case "Shift":
+                    setButtonDrawable(buttons[counter], R.drawable.icon_shift);
+                    break;
+                case "Locale":
+                    setButtonDrawable(buttons[counter], R.drawable.icon_language);
+                    break;
+                case "Backspace":
+                    setButtonDrawable(buttons[counter], R.drawable.icon_backspace);
+                    break;
+                case "Return":
+                    setButtonDrawable(buttons[counter], R.drawable.icon_return);
+                    break;
+                case "Option":
+                    setButtonDrawable(buttons[counter], R.drawable.icon_option);
+                    break;
+                case "Emoji":
+                    setButtonDrawable(buttons[counter], R.drawable.icon_emoji);
+                    break;
+                case "Tab":
+                    setButtonDrawable(buttons[counter], R.drawable.icon_tab);
+                    break;
+                case "Up":
+                    setButtonDrawable(buttons[counter], R.drawable.icon_up);
+                    break;
+                case "Left":
+                    setButtonDrawable(buttons[counter], R.drawable.icon_left);
+                    break;
+                case "Right":
+                    setButtonDrawable(buttons[counter], R.drawable.icon_right);
+                    break;
+                case "Down":
+                    setButtonDrawable(buttons[counter], R.drawable.icon_down);
+                    break;
+                default:
+                    setButtonText(buttons[counter], key.getLabel());
+                    break;
+            }
             counter += 1;
         }
     }

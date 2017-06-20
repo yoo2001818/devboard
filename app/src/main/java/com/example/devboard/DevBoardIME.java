@@ -346,6 +346,8 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
         String current = getInputMethod().finish();
         if (current.length() > 0) {
             getCurrentInputConnection().commitText(current, current.length());
+            previousKey = null;
+            sameKeyCount = 0;
         }
     }
 
@@ -372,6 +374,9 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
     @Override
     public void onKey(int id, Key key) {
         InputConnection ic = getCurrentInputConnection();
+        if (previousKey == key) sameKeyCount += 1;
+        else sameKeyCount = 0;
+        previousKey = key;
         // Intercept to IME first.
         if (getInputMethod().processDevboard(id, shiftKey.isEnabled())) {
             // If this is the first time and the buffer is not empty, commit already existing buffer.
@@ -384,9 +389,6 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
             useToggle();
             return;
         }
-        if (previousKey == key) sameKeyCount += 1;
-        else sameKeyCount = 0;
-        previousKey = key;
         int primaryCode = key.getCode();
         if (primaryCode == 0) {
             // Null key
@@ -415,6 +417,7 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
         // } else if (primaryCode == Keyboard.KEYCODE_CANCEL) {
         //    handleClose();
         } else if (primaryCode == KEYCODE_MULTIPLE) {
+            commitIME();
             int previousIndex = (sameKeyCount - 1) % key.getExtra().size();
             String previous = previousIndex < 0 ? "" : key.getExtra().get(previousIndex);
             String current = key.getExtra().get(sameKeyCount % key.getExtra().size());
