@@ -7,13 +7,13 @@ import java.util.List;
  */
 
 public class KeyLayout {
-    public List<Key> layout;
+    public List<List<Key>> layout;
 
-    public List<Key> getLayout() {
+    public List<List<Key>> getLayout() {
         return layout;
     }
 
-    public void setLayout(List<Key> layout) {
+    public void setLayout(List<List<Key>> layout) {
         this.layout = layout;
     }
 }

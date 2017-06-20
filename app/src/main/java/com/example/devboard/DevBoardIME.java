@@ -31,9 +31,11 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
     public static final int KEYCODE_SHIFT = -1;
     public static final int KEYCODE_BACKSPACE = -2;
     public static final int KEYCODE_LOCALE = -3;
+    public static final int KEYCODE_FN = -4;
+    public static final int KEYCODE_FN2 = -5;
+    public static final int KEYCODE_MULTIPLE = -6;
 
     private CJKInputMethod[] methods;
-    private boolean isShift = false;
     private int currentMethod = 0;
 
     StringBuilder composeQueue = new StringBuilder();
@@ -56,16 +58,56 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
 
     // If the toggle key, like shift or fn keys are "clicked" without pressing any keys, toggle key
     // mode should initiate.
-    boolean toggleKey = false;
-    boolean heldKey = false;
+    ToggleKeyState shiftKey = new ToggleKeyState(new ToggleKeyState.Listener() {
+        @Override
+        public void release() {
+            getCurrentInputConnection().sendKeyEvent(
+                    new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_SHIFT_LEFT));
+            updateShiftKey(getCurrentInputEditorInfo());
+        }
+
+        @Override
+        public void press() {
+            getCurrentInputConnection().sendKeyEvent(
+                    new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_SHIFT_LEFT));
+            updateShiftKey(getCurrentInputEditorInfo());
+        }
+    });
+    ToggleKeyState fnKey = new ToggleKeyState(new ToggleKeyState.Listener() {
+        @Override
+        public void release() {
+
+        }
+
+        @Override
+        public void press() {
+
+        }
+    });
+    ToggleKeyState fn2Key = new ToggleKeyState(new ToggleKeyState.Listener() {
+        @Override
+        public void release() {
+
+        }
+
+        @Override
+        public void press() {
+
+        }
+    });
+
+    Key previousKey;
+    int sameKeyCount = 0;
 
     public DevBoardIME() {
     }
 
     private void placeLayouts() {
         // Load layout data from keyboard layouts, then process / add it to the list.
-        layouts[0] = keyLayout.getLayout();
-        layouts[1] = applyShift(layouts[0]);
+        for (int i = 0; i < 2; ++i) {
+            layouts[i * 2] = keyLayout.getLayout().get(i);
+            layouts[i * 2 + 1] = applyShift(layouts[i * 2]);
+        }
         // Fn1 / Fn2 is not done yet..
         // Have some hardcoded IME
         if (methods.length > 1) {
@@ -92,9 +134,9 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
 
     private List<Key> getCurrentLayout() {
         if (currentMethod == 1) {
-            return layouts[6 + (isShift ? 1 : 0)];
+            return layouts[6 + (shiftKey.isEnabled() ? 1 : 0)];
         }
-        return layouts[(isShift ? 1 : 0)];
+        return layouts[(shiftKey.isEnabled() ? 1 : 0)];
     }
 
     private CJKInputMethod getInputMethod() {
@@ -207,7 +249,7 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
                     // ... Set the composing text to IME's buffer.
                     String current = getInputMethod().getCurrent();
                     getCurrentInputConnection().setComposingText(current, current.length());
-                    releaseToggle();
+                    useToggle();
                     return true;
                 } else {
                     commitIME();
@@ -298,48 +340,27 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
         }
     }
 
-    private void releaseToggle() {
-        if (isShift && toggleKey && !heldKey) {
-            getCurrentInputConnection().sendKeyEvent(
-                    new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_SHIFT_LEFT));
-            isShift = false;
-            updateShiftKey(getCurrentInputEditorInfo());
-        }
-        toggleKey = false;
+    private void useToggle() {
+        shiftKey.use();
     }
 
     @Override
     public void onPress(int id, Key key) {
         int primaryCode = key.getCode();
-        if (primaryCode == KEYCODE_SHIFT) {
-            getCurrentInputConnection().sendKeyEvent(
-                    new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_SHIFT_LEFT));
-            isShift = true;
-            toggleKey = true;
-            heldKey = true;
-            updateShiftKey(getCurrentInputEditorInfo());
-        }
+        if (primaryCode == KEYCODE_SHIFT) shiftKey.press();
     }
 
     @Override
     public void onRelease(int id, Key key) {
         int primaryCode = key.getCode();
-        if (primaryCode == KEYCODE_SHIFT) {
-            if (!toggleKey) {
-                getCurrentInputConnection().sendKeyEvent(
-                        new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_SHIFT_LEFT));
-                isShift = false;
-                updateShiftKey(getCurrentInputEditorInfo());
-            }
-            heldKey = false;
-        }
+        if (primaryCode == KEYCODE_SHIFT) shiftKey.release();
     }
 
     @Override
     public void onKey(int id, Key key) {
         InputConnection ic = getCurrentInputConnection();
         // Intercept to IME first.
-        if (getInputMethod().processDevboard(id, isShift)) {
+        if (getInputMethod().processDevboard(id, shiftKey.isEnabled())) {
             // If this is the first time and the buffer is not empty, commit already existing buffer.
             if (composeQueue.length() > 0) {
                 commitTyped(ic);
@@ -347,9 +368,12 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
             // ... Set the composing text to IME's buffer.
             String current = getInputMethod().getCurrent();
             ic.setComposingText(current, current.length());
-            releaseToggle();
+            useToggle();
             return;
         }
+        if (previousKey == key) sameKeyCount += 1;
+        else sameKeyCount = 0;
+        previousKey = key;
         int primaryCode = key.getCode();
         if (primaryCode == ' ') {
             commitIME();
@@ -371,6 +395,14 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
             updateLayout();
         // } else if (primaryCode == Keyboard.KEYCODE_CANCEL) {
         //    handleClose();
+        } else if (primaryCode == KEYCODE_MULTIPLE) {
+            int previousIndex = (sameKeyCount - 1) % key.getExtra().size();
+            String previous = previousIndex < 0 ? "" : key.getExtra().get(previousIndex);
+            String current = key.getExtra().get(sameKeyCount % key.getExtra().size());
+            // Remove N characters and add as current. Easy?
+            composeQueue.setLength(composeQueue.length() - previous.length());
+            composeQueue.append(current);
+            ic.setComposingText(composeQueue, 1);
         } else {
             commitIME();
             // if (inputView.isShifted()) primaryCode = Character.toUpperCase(primaryCode);
@@ -378,6 +410,6 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
             ic.setComposingText(composeQueue, 1);
             updateShiftKey(getCurrentInputEditorInfo());
         }
-        releaseToggle();
+        useToggle();
     }
 }

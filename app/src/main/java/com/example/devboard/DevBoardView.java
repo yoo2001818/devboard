@@ -29,7 +29,7 @@ public class DevBoardView extends LinearLayout implements View.OnClickListener, 
             new float[] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
             new float[] { -0.5f, 1, 1, 1, 1, 1, 1, 1, 1, 1, -0.5f },
             new float[] { 1f, 1, 1, 1, 1, 1, 1, 1, 1, 1f },
-            new float[] { 1, 1, 1, 4, 1, 1, 1 },
+            new float[] { 1, 1, 1, 3, 1, 1, 1, 1 },
     };
 
     private Handler handler;
@@ -126,7 +126,7 @@ public class DevBoardView extends LinearLayout implements View.OnClickListener, 
             try {
                 Reader reader = new BufferedReader(new InputStreamReader(getResources().openRawResource(R.raw.default_layout), "UTF-8"));
                 Gson gson = new Gson();
-                this.keyLayout = gson.fromJson(reader, KeyLayout.class).getLayout();
+                this.keyLayout = gson.fromJson(reader, KeyLayout.class).getLayout().get(0);
             } catch (UnsupportedEncodingException e) {
                 // This shouldn't happen
             }
