@@ -68,11 +68,12 @@ public class DevBoardView extends LinearLayout implements View.OnClickListener, 
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
         // Use the height from attributes...
         TypedArray a = getContext().obtainStyledAttributes(attrs, R.styleable.DevBoardView);
-        setMeasuredDimension(widthMeasureSpec, a.getDimensionPixelSize(R.styleable.DevBoardView_imeHeight, 100));
+        int spec = a.getDimensionPixelSize(R.styleable.DevBoardView_imeHeight, 100);
         a.recycle();
+        super.onMeasure(widthMeasureSpec, spec);
+        setMeasuredDimension(widthMeasureSpec, spec);
     }
 
     private void createLayout() {

@@ -76,23 +76,25 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
     ToggleKeyState fnKey = new ToggleKeyState(new ToggleKeyState.Listener() {
         @Override
         public void release() {
-
+            updateLayout();
         }
 
         @Override
         public void press() {
-
+            fn2Key.setEnabled(false);
+            updateLayout();
         }
     });
     ToggleKeyState fn2Key = new ToggleKeyState(new ToggleKeyState.Listener() {
         @Override
         public void release() {
-
+            updateLayout();
         }
 
         @Override
         public void press() {
-
+            fnKey.setEnabled(false);
+            updateLayout();
         }
     });
 
@@ -104,7 +106,7 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
 
     private void placeLayouts() {
         // Load layout data from keyboard layouts, then process / add it to the list.
-        for (int i = 0; i < 2; ++i) {
+        for (int i = 0; i < 3; ++i) {
             layouts[i * 2] = keyLayout.getLayout().get(i);
             layouts[i * 2 + 1] = applyShift(layouts[i * 2]);
         }
@@ -133,6 +135,13 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
     }
 
     private List<Key> getCurrentLayout() {
+        // Looks weird
+        if (fnKey.isEnabled()) {
+            return layouts[2 + (shiftKey.isEnabled() ? 1 : 0)];
+        }
+        if (fn2Key.isEnabled()) {
+            return layouts[4 + (shiftKey.isEnabled() ? 1 : 0)];
+        }
         if (currentMethod == 1) {
             return layouts[6 + (shiftKey.isEnabled() ? 1 : 0)];
         }
@@ -348,12 +357,16 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
     public void onPress(int id, Key key) {
         int primaryCode = key.getCode();
         if (primaryCode == KEYCODE_SHIFT) shiftKey.press();
+        if (primaryCode == KEYCODE_FN) fnKey.press();
+        if (primaryCode == KEYCODE_FN2) fn2Key.press();
     }
 
     @Override
     public void onRelease(int id, Key key) {
         int primaryCode = key.getCode();
         if (primaryCode == KEYCODE_SHIFT) shiftKey.release();
+        if (primaryCode == KEYCODE_FN) fnKey.release();
+        if (primaryCode == KEYCODE_FN2) fn2Key.release();
     }
 
     @Override
@@ -375,7 +388,10 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
         else sameKeyCount = 0;
         previousKey = key;
         int primaryCode = key.getCode();
-        if (primaryCode == ' ') {
+        if (primaryCode == 0) {
+            // Null key
+            return;
+        } else if (primaryCode == ' ') {
             commitIME();
             commitTyped(ic);
             sendKey(primaryCode);
@@ -387,7 +403,10 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
         } else if (primaryCode == KEYCODE_BACKSPACE) {
             handleBackspace();
         } else if (primaryCode == KEYCODE_SHIFT) {
-            // handleShift();
+            return;
+        } else if (primaryCode == KEYCODE_FN) {
+            return;
+        } else if (primaryCode == KEYCODE_FN2) {
             return;
         } else if (primaryCode == KEYCODE_LOCALE) {
             commitIME();

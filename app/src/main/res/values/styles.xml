@@ -8,7 +8,7 @@
         <item name="colorAccent">@color/colorAccent</item>
         <item name="imeButtonStyle">@style/IMEButtonTheme</item>
         <item name="imeBackground">@color/buttonRelease</item>
-        <item name="imeHeight">200dp</item>
+        <item name="imeHeight">500dp</item>
     </style>
 
     <style name="IMEButtonTheme" parent="Widget.AppCompat.Button.Borderless">

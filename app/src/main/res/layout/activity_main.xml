@@ -10,9 +10,7 @@
     <com.example.devboard.DevBoardView
         android:layout_width="0dp"
         android:layout_height="200dp"
-        android:layout_marginBottom="8dp"
         android:layout_marginTop="8dp"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         tools:layout_editor_absoluteX="0dp" />
 
