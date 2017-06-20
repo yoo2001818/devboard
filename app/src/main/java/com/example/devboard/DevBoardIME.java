@@ -1,8 +1,10 @@
 package com.example.devboard;
 
+import android.content.Context;
 import android.inputmethodservice.InputMethodService;
 import android.inputmethodservice.Keyboard;
 import android.inputmethodservice.KeyboardView;
+import android.os.Vibrator;
 import android.text.InputType;
 import android.util.Log;
 import android.view.ContextThemeWrapper;
@@ -98,6 +100,9 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
         }
     });
 
+    Vibrator vibrator;
+    SoundPlayer soundPlayer;
+
     Key previousKey;
     int sameKeyCount = 0;
 
@@ -174,6 +179,8 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
             // This shouldn't happen
         }
         this.placeLayouts();
+        vibrator = (Vibrator) getApplicationContext().getSystemService(Context.VIBRATOR_SERVICE);
+        soundPlayer = new SoundPlayer(getApplicationContext());
     }
 
     @Override
@@ -187,6 +194,10 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
     @Override
     public void onStartInput(EditorInfo attribute, boolean restarting) {
         super.onStartInput(attribute, restarting);
+        // Reset state
+        shiftKey.reset();
+        fnKey.reset();
+        fn2Key.reset();
         composeQueue.setLength(0);
         getInputMethod().finish();
     }
@@ -223,6 +234,7 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (event.getRepeatCount() == 0) soundPlayer.playPress();
         switch (keyCode) {
             case KeyEvent.KEYCODE_BACK:
                 if (event.getRepeatCount() == 0 && inputView == null) {
@@ -272,6 +284,7 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
 
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
+        soundPlayer.playRelease();
         return super.onKeyUp(keyCode, event);
     }
 
@@ -359,6 +372,7 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
 
     @Override
     public void onPress(int id, Key key) {
+        soundPlayer.playPress();
         int primaryCode = key.getCode();
         if (primaryCode == KEYCODE_SHIFT) shiftKey.press();
         if (primaryCode == KEYCODE_FN) fnKey.press();
@@ -367,6 +381,7 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
 
     @Override
     public void onRelease(int id, Key key) {
+        soundPlayer.playRelease();
         int primaryCode = key.getCode();
         if (primaryCode == KEYCODE_SHIFT) shiftKey.release();
         if (primaryCode == KEYCODE_FN) fnKey.release();
@@ -383,6 +398,8 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
         if (!fnKey.isEnabled() && !fn2Key.isEnabled() &&
                 getInputMethod().processDevboard(id, shiftKey.isEnabled())
         ) {
+            // Vibrate the phone for short moment
+            vibrator.vibrate(20);
             // If this is the first time and the buffer is not empty, commit already existing buffer.
             if (composeQueue.length() > 0) {
                 commitTyped(ic);
@@ -436,6 +453,8 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
             ic.setComposingText(composeQueue, 1);
             updateShiftKey(getCurrentInputEditorInfo());
         }
+        // Vibrate the phone for short moment
+        vibrator.vibrate(20);
         useToggle();
     }
 }

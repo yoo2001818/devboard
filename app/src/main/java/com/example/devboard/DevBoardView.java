@@ -209,8 +209,7 @@ public class DevBoardView extends LinearLayout implements View.OnClickListener, 
 
     @Override
     public void onClick(View view) {
-        Key key = keyLayout.get(view.getId());
-        if (listener != null) listener.onKey(view.getId(), key);
+        // Do not process onClick - It should be processed with onTouch
     }
 
     @Override
@@ -220,6 +219,7 @@ public class DevBoardView extends LinearLayout implements View.OnClickListener, 
         // Do not digest the event - underlying button should listen to this
         if (motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
             if (listener != null) listener.onPress(id, key);
+            if (listener != null) listener.onKey(view.getId(), key);
         } else if (motionEvent.getAction() == MotionEvent.ACTION_UP) {
             if (runnables[id] != null) {
                 getHandler().removeCallbacks(runnables[id]);

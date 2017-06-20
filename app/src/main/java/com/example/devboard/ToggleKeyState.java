@@ -39,6 +39,12 @@ public class ToggleKeyState {
         used = true;
     }
 
+    public void reset() {
+        used = false;
+        enabled = false;
+        pressed = false;
+    }
+
     public boolean isPressed() {
         return pressed;
     }
