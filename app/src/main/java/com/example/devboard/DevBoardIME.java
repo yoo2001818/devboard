@@ -353,6 +353,8 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
 
     private void useToggle() {
         shiftKey.use();
+        fnKey.use();
+        fn2Key.use();
     }
 
     @Override
@@ -378,7 +380,9 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
         else sameKeyCount = 0;
         previousKey = key;
         // Intercept to IME first.
-        if (getInputMethod().processDevboard(id, shiftKey.isEnabled())) {
+        if (!fnKey.isEnabled() && !fn2Key.isEnabled() &&
+                getInputMethod().processDevboard(id, shiftKey.isEnabled())
+        ) {
             // If this is the first time and the buffer is not empty, commit already existing buffer.
             if (composeQueue.length() > 0) {
                 commitTyped(ic);
@@ -398,7 +402,7 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
             commitTyped(ic);
             sendKey(primaryCode);
             updateShiftKey(getCurrentInputEditorInfo());
-        } else if (primaryCode == '\n') {
+        } else if (primaryCode == '\n' || primaryCode == '\t') {
             commitIME();
             commitTyped(ic);
             sendKey(primaryCode);

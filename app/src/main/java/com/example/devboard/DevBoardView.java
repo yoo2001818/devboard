@@ -5,6 +5,7 @@ import android.content.res.TypedArray;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.ScaleDrawable;
 import android.os.Handler;
+import android.support.v4.graphics.drawable.DrawableCompat;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
@@ -31,7 +32,7 @@ public class DevBoardView extends LinearLayout implements View.OnClickListener, 
             new float[] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
             new float[] { -0.5f, 1, 1, 1, 1, 1, 1, 1, 1, 1, -0.5f },
             new float[] { 1f, 1, 1, 1, 1, 1, 1, 1, 1, 1f },
-            new float[] { 1, 1, 1, 3, 1, 1, 1, 1 },
+            new float[] { 1, 1, 1, 1, 3, 1, 1, 1 },
     };
 
     private Handler handler;
@@ -133,9 +134,11 @@ public class DevBoardView extends LinearLayout implements View.OnClickListener, 
     private void setButtonDrawable(Button button, int resourceId) {
         TypedArray a = getContext().obtainStyledAttributes(attrs, R.styleable.DevBoardView);
         int iconSize = a.getDimensionPixelSize(R.styleable.DevBoardView_imeImageSize, 0);
+        int color = a.getColor(R.styleable.DevBoardView_imeForeground, 0);
         a.recycle();
 
-        Drawable drawable = getResources().getDrawable(resourceId);
+        Drawable drawable = DrawableCompat.wrap(getResources().getDrawable(resourceId));
+        DrawableCompat.setTint(drawable, color);
         drawable.setBounds(0, 0, iconSize * 2, iconSize * 2);
         button.setPadding(0, (getKeyHeight() - iconSize * 2) / 2, 0, 0);
         button.setCompoundDrawables(null, drawable, null, null);

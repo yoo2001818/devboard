@@ -8,6 +8,7 @@
         <item name="colorAccent">@color/colorAccent</item>
         <item name="imeButtonStyle">@style/IMEButtonTheme</item>
         <item name="imeBackground">@color/buttonRelease</item>
+        <item name="imeForeground">@color/buttonText</item>
         <item name="imeHeight">220dp</item>
         <item name="imeImageSize">16sp</item>
     </style>
