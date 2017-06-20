@@ -19,15 +19,14 @@ public class SoundPlayer {
 
     public SoundPlayer(Context context) {
 
-        pool = new SoundPool(4, AudioManager.STREAM_MUSIC, 0);
+        pool = new SoundPool(4, AudioManager.STREAM_SYSTEM, 0);
 
-        pressSounds = new int[5];
+        pressSounds = new int[4];
         releaseSounds = new int[5];
         int i = 0;
 
         // press 1 is too "pointy"
         for (int resId : new int[] {
-                R.raw.keyboard_press2,
                 R.raw.keyboard_press2,
                 R.raw.keyboard_press3,
                 R.raw.keyboard_press4,

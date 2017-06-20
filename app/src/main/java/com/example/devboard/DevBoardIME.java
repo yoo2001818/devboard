@@ -199,6 +199,7 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
         fnKey.reset();
         fn2Key.reset();
         composeQueue.setLength(0);
+        if (restarting) updateLayout();
         getInputMethod().finish();
     }
 
@@ -234,7 +235,7 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (event.getRepeatCount() == 0) soundPlayer.playPress();
+        // if (event.getRepeatCount() == 0) soundPlayer.playPress();
         switch (keyCode) {
             case KeyEvent.KEYCODE_BACK:
                 if (event.getRepeatCount() == 0 && inputView == null) {
@@ -284,7 +285,7 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
 
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
-        soundPlayer.playRelease();
+        // soundPlayer.playRelease();
         return super.onKeyUp(keyCode, event);
     }
 
@@ -374,9 +375,19 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
     public void onPress(int id, Key key) {
         soundPlayer.playPress();
         int primaryCode = key.getCode();
-        if (primaryCode == KEYCODE_SHIFT) shiftKey.press();
-        if (primaryCode == KEYCODE_FN) fnKey.press();
-        if (primaryCode == KEYCODE_FN2) fn2Key.press();
+        if (primaryCode == KEYCODE_SHIFT) {
+            shiftKey.press();
+            vibrator.vibrate(20);
+        }
+        if (primaryCode == KEYCODE_FN) {
+            fnKey.press();
+            vibrator.vibrate(20);
+        }
+        if (primaryCode == KEYCODE_FN2) {
+            fn2Key.press();
+            vibrator.vibrate(20);
+        }
+
     }
 
     @Override
