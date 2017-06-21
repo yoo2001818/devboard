@@ -1,12 +1,14 @@
 package com.example.devboard;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.ScaleDrawable;
 import android.os.Handler;
 import android.support.v4.graphics.drawable.DrawableCompat;
 import android.util.AttributeSet;
+import android.util.TypedValue;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -38,6 +40,7 @@ public class DevBoardView extends LinearLayout implements View.OnClickListener, 
     private Handler handler;
     private AttributeSet attrs;
     private Listener listener;
+    private int height;
 
     protected List<Key> keyLayout;
     protected LinearLayout[] rows;
@@ -48,6 +51,9 @@ public class DevBoardView extends LinearLayout implements View.OnClickListener, 
         super(context, attrs);
         this.setLayoutParams(new ViewGroup.LayoutParams(this.getContext(), attrs));
         this.attrs = attrs;
+        TypedArray a = getContext().obtainStyledAttributes(attrs, R.styleable.DevBoardView);
+        height = a.getDimensionPixelSize(R.styleable.DevBoardView_imeHeight, 100);
+        a.recycle();
         this.createLayout();
     }
 
@@ -57,11 +63,19 @@ public class DevBoardView extends LinearLayout implements View.OnClickListener, 
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
         ));
+        TypedArray a = getContext().obtainStyledAttributes(attrs, R.styleable.DevBoardView);
+        height = a.getDimensionPixelSize(R.styleable.DevBoardView_imeHeight, 100);
+        a.recycle();
         this.createLayout();
     }
 
     public List<Key> getKeyLayout() {
         return keyLayout;
+    }
+
+    public void setHeight(int dp) {
+        Resources r = getResources();
+        height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp, r.getDisplayMetrics());
     }
 
     public void setKeyLayout(List<Key> keyLayout) {
@@ -70,18 +84,11 @@ public class DevBoardView extends LinearLayout implements View.OnClickListener, 
     }
 
     private int getKeyHeight() {
-        TypedArray a = getContext().obtainStyledAttributes(attrs, R.styleable.DevBoardView);
-        int height = a.getDimensionPixelSize(R.styleable.DevBoardView_imeHeight, 100);
-        a.recycle();
         return height / LAYOUT_TABLE.length;
     }
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        // Use the height from attributes...
-        TypedArray a = getContext().obtainStyledAttributes(attrs, R.styleable.DevBoardView);
-        int height = a.getDimensionPixelSize(R.styleable.DevBoardView_imeHeight, 100);
-        a.recycle();
         super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY));
         setMeasuredDimension(MeasureSpec.getSize(widthMeasureSpec), height);
     }
@@ -236,6 +243,7 @@ public class DevBoardView extends LinearLayout implements View.OnClickListener, 
         // I hate Java.
         final int id = view.getId();
         final Key key = keyLayout.get(view.getId());
+        if (listener != null && listener.onLongPress(id, key)) return true;
         if (runnables[id] != null) throw new RuntimeException("Runnable " + id + " is already present; this should not happen");
         runnables[id] = new Runnable() {
             @Override
@@ -254,6 +262,7 @@ public class DevBoardView extends LinearLayout implements View.OnClickListener, 
 
     public interface Listener {
         void onPress(int id, Key key);
+        boolean onLongPress(int id, Key key);
         void onRelease(int id, Key key);
         void onKey(int id, Key key);
     }

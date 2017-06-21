@@ -245,6 +245,14 @@ public class DubeolsikInputMethod implements CJKInputMethod {
     }
 
     @Override
+    public String empty() {
+        // Return and empty the queue.
+        String result = this.queue.toString();
+        queue.setLength(0);
+        return result;
+    }
+
+    @Override
     public List<Key> getLayout(List<Key> original) {
         // Just convert them using a table.
         List<Key> output = new ArrayList<>();

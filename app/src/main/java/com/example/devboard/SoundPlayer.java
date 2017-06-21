@@ -15,11 +15,18 @@ public class SoundPlayer {
     private int[] pressSounds;
     private int[] releaseSounds;
 
+    private float volume = 1f;
+    private int streamType;
+
     private Random random = new Random();
 
     public SoundPlayer(Context context) {
+        this(context, AudioManager.STREAM_SYSTEM);
+    }
 
-        pool = new SoundPool(4, AudioManager.STREAM_SYSTEM, 0);
+    public SoundPlayer(Context context, int streamType) {
+        this.streamType = streamType;
+        pool = new SoundPool(4, streamType, 0);
 
         pressSounds = new int[4];
         releaseSounds = new int[5];
@@ -51,12 +58,21 @@ public class SoundPlayer {
     }
 
     public void playPress() {
-        pool.play(pressSounds[random.nextInt(pressSounds.length)], 1f, 1f, 0, 0, 1);
+        pool.play(pressSounds[random.nextInt(pressSounds.length)], volume, volume, 0, 0, 1);
     }
 
     public void playRelease() {
-        pool.play(releaseSounds[random.nextInt(releaseSounds.length)], 1f, 1f, 0, 0, 1);
+        pool.play(releaseSounds[random.nextInt(releaseSounds.length)], volume, volume, 0, 0, 1);
     }
+
+    public float getVolume() {
+        return volume;
+    }
+
+    public void setVolume(float volume) {
+        this.volume = volume;
+    }
+
     // Cleanup
     public void release() {
         pool.release();

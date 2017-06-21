@@ -1,9 +1,11 @@
 package com.example.devboard;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.inputmethodservice.InputMethodService;
 import android.inputmethodservice.Keyboard;
 import android.inputmethodservice.KeyboardView;
+import android.media.AudioManager;
 import android.os.Vibrator;
 import android.text.InputType;
 import android.util.Log;
@@ -13,6 +15,8 @@ import android.view.View;
 import android.view.inputmethod.CompletionInfo;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
+import android.view.inputmethod.InputMethod;
+import android.view.inputmethod.InputMethodManager;
 import android.view.inputmethod.InputMethodSubtype;
 
 import com.google.gson.Gson;
@@ -30,6 +34,15 @@ import java.util.List;
 
 public class DevBoardIME extends InputMethodService implements DevBoardView.Listener {
 
+    // Java is too verbose.
+    public static final String USE_KOREAN = "useKorean";
+    public static final String AUDIO_TYPE = "audioType";
+    public static final String AUDIO_VOLUME = "audioVolume";
+    public static final String VIBRATE_VOLUME = "vibrateVolume";
+    public static final String LAYOUT_DATA = "layoutData";
+    public static final String THEME = "theme";
+    public static final String KEY_HEIGHT = "keyHeight";
+
     public static final int KEYCODE_SHIFT = -1;
     public static final int KEYCODE_BACKSPACE = -2;
     public static final int KEYCODE_LOCALE = -3;
@@ -40,8 +53,8 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
     private CJKInputMethod[] methods;
     private int currentMethod = 0;
 
-    StringBuilder composeQueue = new StringBuilder();
-    DevBoardView inputView;
+    private StringBuilder composeQueue = new StringBuilder();
+    private DevBoardView inputView;
 
     // There are 8 planes in the keyboard - Fn1, Fn2, Shift. Shift planes are generated automatically.
     // 0 - normal
@@ -55,12 +68,12 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
     // As you can see, even numbers are normal layouts, and odd numbers are shift layouts.
     // Note that we are using raw List - it couldn't be done using generic List.
     // Also note that it's possible to support infinitely many input methods - but that probably won't happen.
-    List[] layouts = new List[8];
-    KeyLayout keyLayout;
+    private List[] layouts = new List[8];
+    private KeyLayout keyLayout;
 
     // If the toggle key, like shift or fn keys are "clicked" without pressing any keys, toggle key
     // mode should initiate.
-    ToggleKeyState shiftKey = new ToggleKeyState(new ToggleKeyState.Listener() {
+    private ToggleKeyState shiftKey = new ToggleKeyState(new ToggleKeyState.Listener() {
         @Override
         public void release() {
             getCurrentInputConnection().sendKeyEvent(
@@ -75,7 +88,7 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
             updateShiftKey(getCurrentInputEditorInfo());
         }
     });
-    ToggleKeyState fnKey = new ToggleKeyState(new ToggleKeyState.Listener() {
+    private ToggleKeyState fnKey = new ToggleKeyState(new ToggleKeyState.Listener() {
         @Override
         public void release() {
             updateLayout();
@@ -87,7 +100,7 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
             updateLayout();
         }
     });
-    ToggleKeyState fn2Key = new ToggleKeyState(new ToggleKeyState.Listener() {
+    private ToggleKeyState fn2Key = new ToggleKeyState(new ToggleKeyState.Listener() {
         @Override
         public void release() {
             updateLayout();
@@ -100,14 +113,16 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
         }
     });
 
-    Vibrator vibrator;
-    SoundPlayer soundPlayer;
+    private Gson gson = new Gson();
 
-    Key previousKey;
-    int sameKeyCount = 0;
+    private Vibrator vibrator;
+    private int vibrateVolume = 20;
+    private SoundPlayer soundPlayer;;
+    private int currentTheme = -1;
+    private int currentHeight;
 
-    public DevBoardIME() {
-    }
+    private Key previousKey;
+    private int sameKeyCount = 0;
 
     private void placeLayouts() {
         // Load layout data from keyboard layouts, then process / add it to the list.
@@ -166,6 +181,8 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
 
     @Override
     public void onInitializeInterface() {
+        loadConfiguration();
+        /*
         methods = new CJKInputMethod[] {
                 new NoopInputMethod(),
                 new DubeolsikInputMethod(),
@@ -178,16 +195,28 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
         } catch (UnsupportedEncodingException e) {
             // This shouldn't happen
         }
-        this.placeLayouts();
-        vibrator = (Vibrator) getApplicationContext().getSystemService(Context.VIBRATOR_SERVICE);
         soundPlayer = new SoundPlayer(getApplicationContext());
+        this.placeLayouts();
+        */
+        vibrator = (Vibrator) getApplicationContext().getSystemService(Context.VIBRATOR_SERVICE);
     }
 
     @Override
     public View onCreateInputView() {
-        DevBoardView view = new DevBoardView(new ContextThemeWrapper(getApplicationContext(), R.style.AppTheme));
+        if (inputView != null) return inputView;
+        DevBoardView view = new DevBoardView(new ContextThemeWrapper(getApplicationContext(), currentTheme));
         view.setListener(this);
+        view.setHeight(currentHeight);
         inputView = view;
+        return view;
+    }
+
+    public View forceCreateView() {
+        DevBoardView view = new DevBoardView(new ContextThemeWrapper(getApplicationContext(), currentTheme));
+        view.setListener(this);
+        view.setHeight(currentHeight);
+        inputView = view;
+        setInputView(view);
         return view;
     }
 
@@ -199,7 +228,10 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
         fnKey.reset();
         fn2Key.reset();
         composeQueue.setLength(0);
-        if (restarting) updateLayout();
+        if (restarting) {
+            onCreateInputView();
+            updateLayout();
+        }
         getInputMethod().finish();
     }
 
@@ -371,21 +403,28 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
         fn2Key.use();
     }
 
+    private boolean isConnectBot() {
+        // ConnectBot simply ignores suggestions - which is bad. We need to workaround to not to use
+        // IME to make this work on ConnectBot.
+        EditorInfo ei = getCurrentInputEditorInfo();
+        return ei.inputType == 0;
+    }
+
     @Override
     public void onPress(int id, Key key) {
         soundPlayer.playPress();
         int primaryCode = key.getCode();
         if (primaryCode == KEYCODE_SHIFT) {
             shiftKey.press();
-            vibrator.vibrate(20);
+            vibrator.vibrate(vibrateVolume);
         }
         if (primaryCode == KEYCODE_FN) {
             fnKey.press();
-            vibrator.vibrate(20);
+            vibrator.vibrate(vibrateVolume);
         }
         if (primaryCode == KEYCODE_FN2) {
             fn2Key.press();
-            vibrator.vibrate(20);
+            vibrator.vibrate(vibrateVolume);
         }
 
     }
@@ -400,6 +439,17 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
     }
 
     @Override
+    public boolean onLongPress(int id, Key key) {
+        int primaryCode = key.getCode();
+        switch (primaryCode) {
+            case KEYCODE_LOCALE:
+                ((InputMethodManager) getSystemService(INPUT_METHOD_SERVICE)).showInputMethodPicker();
+                return true;
+        }
+        return false;
+    }
+
+    @Override
     public void onKey(int id, Key key) {
         InputConnection ic = getCurrentInputConnection();
         if (previousKey == key) sameKeyCount += 1;
@@ -410,62 +460,112 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
                 getInputMethod().processDevboard(id, shiftKey.isEnabled())
         ) {
             // Vibrate the phone for short moment
-            vibrator.vibrate(20);
+            vibrator.vibrate(vibrateVolume);
             // If this is the first time and the buffer is not empty, commit already existing buffer.
             if (composeQueue.length() > 0) {
                 commitTyped(ic);
             }
             // ... Set the composing text to IME's buffer.
-            String current = getInputMethod().getCurrent();
-            ic.setComposingText(current, current.length());
+            if (isConnectBot()) {
+                String buffer = getInputMethod().empty();
+                ic.commitText(buffer, buffer.length());
+                ic.setComposingText(getInputMethod().getCurrent(), 1);
+            } else {
+                String current = getInputMethod().getCurrent();
+                ic.setComposingText(current, 1);
+            }
             useToggle();
             return;
         }
         int primaryCode = key.getCode();
-        if (primaryCode == 0) {
-            // Null key
-            return;
-        } else if (primaryCode == ' ') {
-            commitIME();
-            commitTyped(ic);
-            sendKey(primaryCode);
-            updateShiftKey(getCurrentInputEditorInfo());
-        } else if (primaryCode == '\n' || primaryCode == '\t') {
-            commitIME();
-            commitTyped(ic);
-            sendKey(primaryCode);
-        } else if (primaryCode == KEYCODE_BACKSPACE) {
-            handleBackspace();
-        } else if (primaryCode == KEYCODE_SHIFT) {
-            return;
-        } else if (primaryCode == KEYCODE_FN) {
-            return;
-        } else if (primaryCode == KEYCODE_FN2) {
-            return;
-        } else if (primaryCode == KEYCODE_LOCALE) {
-            commitIME();
-            currentMethod = (currentMethod + 1) % methods.length;
-            updateLayout();
-        // } else if (primaryCode == Keyboard.KEYCODE_CANCEL) {
-        //    handleClose();
-        } else if (primaryCode == KEYCODE_MULTIPLE) {
-            commitIME();
-            int previousIndex = (sameKeyCount - 1) % key.getExtra().size();
-            String previous = previousIndex < 0 ? "" : key.getExtra().get(previousIndex);
-            String current = key.getExtra().get(sameKeyCount % key.getExtra().size());
-            // Remove N characters and add as current. Easy?
-            composeQueue.setLength(composeQueue.length() - previous.length());
-            composeQueue.append(current);
-            ic.setComposingText(composeQueue, 1);
-        } else {
-            commitIME();
-            // if (inputView.isShifted()) primaryCode = Character.toUpperCase(primaryCode);
-            composeQueue.append((char) primaryCode);
-            ic.setComposingText(composeQueue, 1);
-            updateShiftKey(getCurrentInputEditorInfo());
+        switch (primaryCode) {
+            case 0:
+                return;
+            case ' ':
+                commitIME();
+                commitTyped(ic);
+                sendKey(primaryCode);
+                updateShiftKey(getCurrentInputEditorInfo());
+                break;
+            case '\n':
+            case '\t':
+                commitIME();
+                commitTyped(ic);
+                sendKey(primaryCode);
+                break;
+            case KEYCODE_BACKSPACE:
+                handleBackspace();
+                break;
+            case KEYCODE_SHIFT:
+            case KEYCODE_FN:
+            case KEYCODE_FN2:
+                return;
+            case KEYCODE_LOCALE:
+                commitIME();
+                currentMethod = (currentMethod + 1) % methods.length;
+                updateLayout();
+                break;
+            case KEYCODE_MULTIPLE:
+                commitIME();
+                int previousIndex = (sameKeyCount - 1) % key.getExtra().size();
+                String previous = previousIndex < 0 ? "" : key.getExtra().get(previousIndex);
+                String current = key.getExtra().get(sameKeyCount % key.getExtra().size());
+                // Remove N characters and add as current. Easy?
+                composeQueue.setLength(composeQueue.length() - previous.length());
+                composeQueue.append(current);
+                ic.setComposingText(composeQueue, 1);
+                break;
+            default:
+                commitIME();
+                // if (inputView.isShifted()) primaryCode = Character.toUpperCase(primaryCode);
+                composeQueue.append((char) primaryCode);
+                ic.setComposingText(composeQueue, 1);
+                updateShiftKey(getCurrentInputEditorInfo());
+                if (isConnectBot()) commitTyped(ic);
+                break;
         }
         // Vibrate the phone for short moment
-        vibrator.vibrate(20);
+        vibrator.vibrate(vibrateVolume);
         useToggle();
+    }
+
+
+    public void loadConfiguration() {
+        SharedPreferences pref = getApplicationContext().getSharedPreferences("devboard", MODE_PRIVATE);
+        if (pref.getBoolean(USE_KOREAN, true)) {
+            methods = new CJKInputMethod[]{
+                    new NoopInputMethod(),
+                    new DubeolsikInputMethod(),
+            };
+        } else {
+            methods = new CJKInputMethod[]{
+                    new NoopInputMethod()
+            };
+        }
+        if (pref.contains(LAYOUT_DATA)) {
+            keyLayout = gson.fromJson(pref.getString(LAYOUT_DATA, ""), KeyLayout.class);
+        } else {
+            try {
+                Reader reader = new BufferedReader(new InputStreamReader(getResources().openRawResource(R.raw.default_layout), "UTF-8"));
+                // Load default layout
+                keyLayout = gson.fromJson(reader, KeyLayout.class);
+            } catch (UnsupportedEncodingException e) {
+                // This shouldn't happen
+            }
+        }
+        if (soundPlayer != null) soundPlayer.release();
+        soundPlayer = new SoundPlayer(getApplicationContext(), pref.getInt(AUDIO_TYPE, AudioManager.STREAM_SYSTEM));
+        soundPlayer.setVolume(pref.getFloat(AUDIO_VOLUME, 1));
+        vibrateVolume = pref.getInt(VIBRATE_VOLUME, 20);
+        currentHeight = pref.getInt(KEY_HEIGHT, 220);
+        if (inputView != null) inputView.setHeight(currentHeight);
+        int desiredTheme = pref.getInt(THEME, R.style.AppTheme);
+        if (currentTheme != -1 && currentTheme != desiredTheme) {
+            // Force update view
+            currentTheme = desiredTheme;
+            forceCreateView();
+        }
+        currentTheme = desiredTheme;
+        this.placeLayouts();
     }
 }

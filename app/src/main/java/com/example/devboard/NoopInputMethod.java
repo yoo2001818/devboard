@@ -41,6 +41,11 @@ public class NoopInputMethod implements CJKInputMethod {
     }
 
     @Override
+    public String empty() {
+        return "";
+    }
+
+    @Override
     public List<Key> getLayout(List<Key> original) {
         return original;
     }

@@ -13,6 +13,7 @@ public interface CJKInputMethod {
     boolean processDevboard(int position, boolean shift);
     boolean process(int charCode);
     String getCurrent();
+    String empty();
 
     List<Key> getLayout(List<Key> original);
     List<Key> getLayoutShift(List<Key> original);
