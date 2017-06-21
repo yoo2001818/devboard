@@ -141,7 +141,7 @@ public class DevBoardView extends LinearLayout implements View.OnClickListener, 
 
     private void setButtonDrawable(Button button, int resourceId) {
         TypedArray a = getContext().obtainStyledAttributes(attrs, R.styleable.DevBoardView);
-        int iconSize = a.getDimensionPixelSize(R.styleable.DevBoardView_imeImageSize, 0);
+        int iconSize = a.getDimensionPixelSize(R.styleable.DevBoardView_imeImageSize, 64);
         int color = a.getColor(R.styleable.DevBoardView_imeForeground, 0);
         a.recycle();
 
