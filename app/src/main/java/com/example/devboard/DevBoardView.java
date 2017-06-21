@@ -126,6 +126,7 @@ public class DevBoardView extends LinearLayout implements View.OnClickListener, 
                     button.setOnTouchListener(this);
                     button.setOnLongClickListener(this);
                     button.setSoundEffectsEnabled(false);
+                    button.setFocusable(false);
                     buttons[counter] = button;
                     counter += 1;
                 } else {

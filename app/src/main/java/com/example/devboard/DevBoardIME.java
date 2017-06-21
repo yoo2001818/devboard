@@ -50,6 +50,11 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
     public static final int KEYCODE_FN2 = -5;
     public static final int KEYCODE_MULTIPLE = -6;
 
+    public static final int KEYCODE_UP = -7;
+    public static final int KEYCODE_DOWN = -8;
+    public static final int KEYCODE_LEFT = -9;
+    public static final int KEYCODE_RIGHT = -10;
+
     private CJKInputMethod[] methods;
     private int currentMethod = 0;
 
@@ -488,7 +493,6 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
                 updateShiftKey(getCurrentInputEditorInfo());
                 break;
             case '\n':
-            case '\t':
                 commitIME();
                 commitTyped(ic);
                 sendKey(primaryCode);
@@ -514,6 +518,23 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
                 composeQueue.setLength(composeQueue.length() - previous.length());
                 composeQueue.append(current);
                 ic.setComposingText(composeQueue, 1);
+                break;
+            case '\t':
+                commitIME();
+                commitTyped(ic);
+                keyDownUp(KeyEvent.KEYCODE_TAB);
+                break;
+            case KEYCODE_UP:
+                keyDownUp(KeyEvent.KEYCODE_DPAD_UP);
+                break;
+            case KEYCODE_DOWN:
+                keyDownUp(KeyEvent.KEYCODE_DPAD_DOWN);
+                break;
+            case KEYCODE_LEFT:
+                keyDownUp(KeyEvent.KEYCODE_DPAD_LEFT);
+                break;
+            case KEYCODE_RIGHT:
+                keyDownUp(KeyEvent.KEYCODE_DPAD_RIGHT);
                 break;
             default:
                 commitIME();
