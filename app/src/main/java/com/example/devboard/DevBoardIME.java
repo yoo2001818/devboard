@@ -587,6 +587,12 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
             case "default":
                 desiredTheme = R.style.AppTheme;
                 break;
+            case "white":
+                desiredTheme = R.style.WhiteTheme;
+                break;
+            case "blue":
+                desiredTheme = R.style.BlueTheme;
+                break;
         }
         if (currentTheme != -1 && currentTheme != desiredTheme) {
             // Force update view
