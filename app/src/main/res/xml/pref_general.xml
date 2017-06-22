@@ -1,8 +1,8 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
     <SwitchPreference
+        defaultValue="true"
         android:defaultValue="true"
-        android:key="useKorean"
         android:title="한국어 자판 사용" />
 
     <Preference
@@ -29,7 +29,7 @@
         -->
 
     <ListPreference
-        android:defaultValue="default"
+        android:defaultValue="@string/themeDefault"
         android:entries="@array/pref_theme_titles"
         android:entryValues="@array/pref_theme_values"
         android:key="theme"
@@ -38,7 +38,7 @@
         android:title="테마" />
 
     <ListPreference
-        android:defaultValue="system"
+        android:defaultValue="@string/audioTypeDefault"
         android:entries="@array/pref_audio_titles"
         android:entryValues="@array/pref_audio_values"
         android:key="audioType"
@@ -48,7 +48,7 @@
 
     <com.example.devboard.SeekBarPreference
         android:key="audioVolume"
-        android:defaultValue="1"
+        android:defaultValue="@integer/audioVolumeDefault"
         android:max="100"
         android:text="%"
         android:summary="$1%"
@@ -57,7 +57,7 @@
 
     <com.example.devboard.SeekBarPreference
         android:key="vibrateVolume"
-        android:defaultValue="20"
+        android:defaultValue="@integer/vibrateVolumeDefault"
         android:max="200"
         android:text="ms"
         android:summary="$1ms"
@@ -66,7 +66,7 @@
 
     <com.example.devboard.SeekBarPreference
         android:key="keyHeight"
-        android:defaultValue="220"
+        android:defaultValue="@integer/keyHeightDefault"
         android:max="500"
         android:text="dp"
         android:summary="$1dp"

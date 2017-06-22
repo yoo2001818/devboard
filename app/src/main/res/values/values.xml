@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <integer name="audioVolumeDefault">100</integer>
+    <integer name="vibrateVolumeDefault">20</integer>
+    <integer name="keyHeightDefault">220</integer>
+    <string name="themeDefault">default</string>
+    <string name="audioTypeDefault">system</string>
+</resources>

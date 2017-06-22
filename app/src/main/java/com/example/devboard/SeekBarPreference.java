@@ -1,6 +1,7 @@
 package com.example.devboard;
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.os.Bundle;
 import android.preference.DialogPreference;
 import android.util.AttributeSet;
@@ -64,6 +65,8 @@ public class SeekBarPreference extends DialogPreference implements SeekBar.OnSee
         // Get default and max seekbar values :
         mDefault = attrs.getAttributeIntValue(androidns, "defaultValue", 0);
         mMax = attrs.getAttributeIntValue(androidns, "max", 100);
+
+        // setDefaultValue(mDefault);
     }
     // ------------------------------------------------------------------------------------------
 
@@ -118,10 +121,18 @@ public class SeekBarPreference extends DialogPreference implements SeekBar.OnSee
     {
         super.onSetInitialValue(restore, defaultValue);
         if (restore)
-            mValue = shouldPersist() ? getPersistedInt(mDefault) : 0;
+            mValue = shouldPersist() ? getPersistedInt(mDefault) : (Integer) defaultValue;
         else
             mValue = (Integer)defaultValue;
+        persistInt(mValue);
     }
+
+    @Override
+    protected Integer onGetDefaultValue(TypedArray a, int index) {
+        return a.getInteger(index, mDefault);
+    }
+
+
     // ------------------------------------------------------------------------------------------
 
 
