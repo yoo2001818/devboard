@@ -1,4 +1,5 @@
 {
+  "name": "기본",
   "layout": [
     [
       { "code": 113, "label": "q" },

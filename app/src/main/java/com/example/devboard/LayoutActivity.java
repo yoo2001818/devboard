@@ -132,24 +132,28 @@ public class LayoutActivity extends AppCompatActivity {
         // :P
         SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
         KeyLayout currentLayout = null;
+        KeyLayout defaultLayout = null;
         if (pref.contains(DevBoardIME.LAYOUT_DATA)) {
             currentLayout = gson.fromJson(pref.getString(DevBoardIME.LAYOUT_DATA, ""), KeyLayout.class);
         }
-        if (currentLayout == null) {
-            try {
-                Reader reader = new BufferedReader(new InputStreamReader(getResources().openRawResource(R.raw.default_layout), "UTF-8"));
-                // Load default layout
-                currentLayout = gson.fromJson(reader, KeyLayout.class);
-            } catch (UnsupportedEncodingException e) {
-                // This shouldn't happen
-            }
+        try {
+            Reader reader = new BufferedReader(new InputStreamReader(getResources().openRawResource(R.raw.default_layout), "UTF-8"));
+            // Load default layout
+            defaultLayout = gson.fromJson(reader, KeyLayout.class);
+        } catch (UnsupportedEncodingException e) {
+            // This shouldn't happen
         }
-        if (currentLayout == null) throw new NullPointerException("current layout is null");
+        try {
+            if (currentLayout == null) currentLayout = defaultLayout.clone();
+        } catch (CloneNotSupportedException e) {
+            // ...
+        }
         currentLayout.setPrimary(true);
         // And... load candidates.
         Type listType = new TypeToken<List<KeyLayout>>(){}.getType();
         layouts = gson.fromJson(pref.getString("layouts", "[]"), listType);
         layouts.add(0, currentLayout);
+        layouts.add(defaultLayout);
         // Finally, update combobox and the keyboard.
         spinnerAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, layouts);
         spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -212,26 +216,6 @@ public class LayoutActivity extends AppCompatActivity {
                 if (selectedPos == -1) return;
                 final Key key = (Key) presetView.getAdapter().getItem(i);
                 if (selectedLayoutPos != 0) {
-                    new AlertDialog.Builder(LayoutActivity.this)
-                            .setMessage("다른 레이아웃을 편집하려면 주 레이아웃을 지금 선택한 레이아웃으로 바꿔야 합니다. 계속 하시겠습니까?")
-                            .setPositiveButton("네", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialogInterface, int i) {
-                                    // Okay?
-                                    swapLayout(selectedLayoutPos);
-                                    selectedLayoutPos = 0;
-                                    setPage(0);
-                                    spinner.setSelection(0);
-                                    spinnerAdapter.notifyDataSetChanged();
-                                    writeKey(selectedPos, key);
-                                }
-                            })
-                            .setNegativeButton("아니요", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialogInterface, int i) {
-
-                                }
-                            }).show();
                     return;
                 }
                 writeKey(selectedPos, key);
@@ -242,8 +226,19 @@ public class LayoutActivity extends AppCompatActivity {
     private void swapLayout(int target) {
         KeyLayout targetLayout = layouts.get(target);
         KeyLayout primaryLayout = layouts.get(0);
-        layouts.set(target, primaryLayout);
-        layouts.set(0, targetLayout);
+        if (target == layouts.size() - 1) {
+            // This case is different - we shouldn't swap it. Instead, we should copy them.
+            layouts.add(target, primaryLayout);
+            try {
+                layouts.set(0, targetLayout.clone());
+            } catch (CloneNotSupportedException e) {
+                // This shouldn't occur.
+            }
+            targetLayout = layouts.get(0);
+        } else {
+            layouts.set(target, primaryLayout);
+            layouts.set(0, targetLayout);
+        }
         primaryLayout.setPrimary(false);
         targetLayout.setPrimary(true);
         spinnerAdapter.notifyDataSetChanged();
@@ -259,7 +254,7 @@ public class LayoutActivity extends AppCompatActivity {
 
     private void saveLayouts() {
         Type listType = new TypeToken<List<KeyLayout>>(){}.getType();
-        List<KeyLayout> saveList = layouts.subList(1, layouts.size());
+        List<KeyLayout> saveList = layouts.subList(1, layouts.size() - 1);
         SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(this).edit();
         editor.putString("layouts", gson.toJson(saveList, listType));
         editor.apply();
