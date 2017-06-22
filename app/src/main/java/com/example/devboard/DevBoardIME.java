@@ -1,12 +1,14 @@
 package com.example.devboard;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.inputmethodservice.InputMethodService;
 import android.inputmethodservice.Keyboard;
 import android.inputmethodservice.KeyboardView;
 import android.media.AudioManager;
 import android.os.Vibrator;
+import android.preference.PreferenceManager;
 import android.text.InputType;
 import android.util.Log;
 import android.view.ContextThemeWrapper;
@@ -54,6 +56,10 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
     public static final int KEYCODE_DOWN = -8;
     public static final int KEYCODE_LEFT = -9;
     public static final int KEYCODE_RIGHT = -10;
+
+    public static final int KEYCODE_OPTIONS = -11;
+
+    private static DevBoardIME instance;
 
     private CJKInputMethod[] methods;
     private int currentMethod = 0;
@@ -182,6 +188,11 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
         if (currentLayout != inputView.getKeyLayout()) {
             inputView.setKeyLayout(currentLayout);
         }
+    }
+
+    public DevBoardIME() {
+        super();
+        instance = this;
     }
 
     @Override
@@ -536,6 +547,12 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
             case KEYCODE_RIGHT:
                 keyDownUp(KeyEvent.KEYCODE_DPAD_RIGHT);
                 break;
+            case KEYCODE_OPTIONS:
+                commitIME();
+                commitTyped(ic);
+                Intent intent = new Intent(getApplicationContext(), SettingsActivity.class);
+                startActivity(intent);
+                break;
             default:
                 commitIME();
                 // if (inputView.isShifted()) primaryCode = Character.toUpperCase(primaryCode);
@@ -552,7 +569,9 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
 
 
     public void loadConfiguration() {
-        SharedPreferences pref = getApplicationContext().getSharedPreferences("devboard", MODE_PRIVATE);
+        Log.i("DevboardIME", "IME reloading config");
+        SharedPreferences pref = PreferenceManager
+                .getDefaultSharedPreferences(getApplicationContext());
         if (pref.getBoolean(USE_KOREAN, true)) {
             methods = new CJKInputMethod[]{
                     new NoopInputMethod(),
@@ -575,8 +594,18 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
             }
         }
         if (soundPlayer != null) soundPlayer.release();
-        soundPlayer = new SoundPlayer(getApplicationContext(), pref.getInt(AUDIO_TYPE, AudioManager.STREAM_SYSTEM));
-        soundPlayer.setVolume(pref.getFloat(AUDIO_VOLUME, 1));
+        String audioTypeName = pref.getString(AUDIO_TYPE, "system");
+        int audioType = AudioManager.STREAM_SYSTEM;
+        switch (audioTypeName) {
+            case "system":
+                audioType = AudioManager.STREAM_SYSTEM;
+                break;
+            case "media":
+                audioType = AudioManager.STREAM_MUSIC;
+                break;
+        }
+        soundPlayer = new SoundPlayer(getApplicationContext(), audioType);
+        soundPlayer.setVolume(pref.getInt(AUDIO_VOLUME, 100) / 100f);
         vibrateVolume = pref.getInt(VIBRATE_VOLUME, 20);
         currentHeight = pref.getInt(KEY_HEIGHT, 220);
         if (inputView != null) inputView.setHeight(currentHeight);
@@ -601,5 +630,9 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
         }
         currentTheme = desiredTheme;
         this.placeLayouts();
+    }
+
+    public static DevBoardIME getInstance() {
+        return instance;
     }
 }

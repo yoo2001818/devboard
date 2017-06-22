@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="pref_theme_titles">
+        <item>블랙</item>
+        <item>화이트</item>
+        <item>블루</item>
+    </string-array>
+    <string-array name="pref_theme_values">
+        <item>default</item>
+        <item>white</item>
+        <item>blue</item>
+    </string-array>
+    <string-array name="pref_audio_titles">
+        <item>시스템</item>
+        <item>미디어</item>
+    </string-array>
+    <string-array name="pref_audio_values">
+        <item>system</item>
+        <item>media</item>
+    </string-array>
+    <string-array name="volume_entries">끔, 매우 작음, 작음, 중간, 큼, 매우 큼</string-array>
+    <string-array name="volume_entry_values">0, 0.1, 0.3, 0.5, 0.7, 1.0</string-array>
+</resources>

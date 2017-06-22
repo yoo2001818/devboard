@@ -2,12 +2,21 @@
 
     <SwitchPreference
         android:defaultValue="true"
-        android:key="example_switch"
-        android:summary="@string/pref_description_social_recommendations"
-        android:title="@string/pref_title_social_recommendations" />
+        android:key="useKorean"
+        android:title="한국어 자판 사용" />
+
+    <Preference
+        android:key="layoutData"
+        android:title="레이아웃">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="my.notifier.ui"
+            android:targetClass="my.notifier.ui.EditCoursesNamesActivity" />
+    </Preference>
 
     <!-- NOTE: EditTextPreference accepts EditText attributes. -->
     <!-- NOTE: EditTextPreference's summary should be set to its value by the activity code. -->
+    <!--
     <EditTextPreference
         android:capitalize="words"
         android:defaultValue="@string/pref_default_display_name"
@@ -17,17 +26,51 @@
         android:selectAllOnFocus="true"
         android:singleLine="true"
         android:title="@string/pref_title_display_name" />
+        -->
 
-    <!-- NOTE: Hide buttons to simplify the UI. Users can touch outside the dialog to
-         dismiss it. -->
-    <!-- NOTE: ListPreference's summary should be set to its value by the activity code. -->
     <ListPreference
-        android:defaultValue="-1"
-        android:entries="@array/pref_example_list_titles"
-        android:entryValues="@array/pref_example_list_values"
-        android:key="example_list"
+        android:defaultValue="default"
+        android:entries="@array/pref_theme_titles"
+        android:entryValues="@array/pref_theme_values"
+        android:key="theme"
         android:negativeButtonText="@null"
         android:positiveButtonText="@null"
-        android:title="@string/pref_title_add_friends_to_messages" />
+        android:title="테마" />
+
+    <ListPreference
+        android:defaultValue="system"
+        android:entries="@array/pref_audio_titles"
+        android:entryValues="@array/pref_audio_values"
+        android:key="audioType"
+        android:negativeButtonText="@null"
+        android:positiveButtonText="@null"
+        android:title="소리 유형" />
+
+    <com.example.devboard.SeekBarPreference
+        android:key="audioVolume"
+        android:defaultValue="1"
+        android:max="100"
+        android:text="%"
+        android:summary="$1%"
+        android:title="소리 크기"
+    />
+
+    <com.example.devboard.SeekBarPreference
+        android:key="vibrateVolume"
+        android:defaultValue="20"
+        android:max="200"
+        android:text="ms"
+        android:summary="$1ms"
+        android:title="진동 크기"
+    />
+
+    <com.example.devboard.SeekBarPreference
+        android:key="keyHeight"
+        android:defaultValue="220"
+        android:max="500"
+        android:text="dp"
+        android:summary="$1dp"
+        android:title="키보드 높이"
+        />
 
 </PreferenceScreen>
