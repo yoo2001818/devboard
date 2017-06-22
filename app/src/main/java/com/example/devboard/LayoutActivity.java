@@ -1,10 +1,18 @@
 package com.example.devboard;
 
+import android.Manifest;
+import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
+import android.net.Uri;
+import android.os.Environment;
 import android.preference.PreferenceManager;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -28,6 +36,10 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
@@ -38,6 +50,9 @@ import java.util.Collections;
 import java.util.List;
 
 public class LayoutActivity extends AppCompatActivity {
+
+    public static final int REQUEST_IMPORT = 1000;
+    public static final int REQUEST_EXPORT = 1001;
 
     Gson gson = new Gson();
 
@@ -453,11 +468,111 @@ public class LayoutActivity extends AppCompatActivity {
     }
 
     public void handleImport() {
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("*/*");
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
 
+        // special intent for Samsung file manager
+        Intent sIntent = new Intent("com.sec.android.app.myfiles.PICK_DATA");
+        sIntent.putExtra("CONTENT_TYPE", "*/*");
+        sIntent.addCategory(Intent.CATEGORY_DEFAULT);
+
+        Intent chooserIntent;
+        if (getPackageManager().resolveActivity(sIntent, 0) != null){
+            // it is device with samsung file manager
+            chooserIntent = Intent.createChooser(sIntent, "파일 가져오기");
+            chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[] { intent });
+        }
+        else {
+            chooserIntent = Intent.createChooser(intent, "파일 가져오기");
+        }
+
+        try {
+            startActivityForResult(chooserIntent, REQUEST_IMPORT);
+        } catch (android.content.ActivityNotFoundException ex) {
+            Toast.makeText(getApplicationContext(), "파일 탐색기를 찾을 수 없습니다.", Toast.LENGTH_SHORT).show();
+        }
     }
 
     public void handleExport() {
+        int result = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        if (result != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[] {
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE
+            }, REQUEST_EXPORT);
+            return;
+        }
+        // Create empty file...
+        String filename = "output-" + selectedLayout.getName() + "-" + System.currentTimeMillis() + ".json";
+        File externalDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
+        File file = new File(externalDir, filename);
+        FileOutputStream outputStream;
+        String path = "";
+        try {
+            file.getParentFile().mkdirs();
+            if (!file.exists()) file.createNewFile();
+            outputStream = new FileOutputStream(file);
+            outputStream.write(gson.toJson(selectedLayout).getBytes());
+            outputStream.close();
+            path = file.getCanonicalPath();
+        } catch (Exception e) {
+            e.printStackTrace();
+            Toast.makeText(getApplicationContext(), "내보내는 중 오류가 발생했습니다.", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
+        AlertDialog.Builder alert = new AlertDialog.Builder(this);
+        alert.setTitle("내보내기");
+        alert.setMessage(path + " (으)로 내보냈습니다.");
+
+        alert.setPositiveButton("확인", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+            }
+        });
+        alert.show();
+        Intent shareIntent = new Intent();
+        shareIntent.setAction(Intent.ACTION_SEND);
+        shareIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(file));
+        shareIntent.setType("*/*");
+        startActivity(Intent.createChooser(shareIntent, "내보내기"));
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        switch (requestCode) {
+            case REQUEST_EXPORT:
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    handleExport();
+                }
+                break;
+            default:
+                super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == REQUEST_IMPORT) {
+            if (resultCode == RESULT_OK) {
+                try {
+                    InputStream is = getContentResolver().openInputStream(data.getData());
+                    Reader reader = new BufferedReader(new InputStreamReader(is, "UTF-8"));
+                    // Load layout
+                    KeyLayout layout = gson.fromJson(reader, KeyLayout.class);
+                    layouts.add(layouts.size() - 1, layout);
+                    swapLayout(layouts.size() - 2);
+                    selectedLayout = spinnerAdapter.getItem(0);
+                    selectedLayoutPos = 0;
+                    setPage(0);
+                    spinner.setSelection(0);
+                    spinnerAdapter.notifyDataSetChanged();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    Toast.makeText(getApplicationContext(), "불러오는 중 오류가 발생했습니다.", Toast.LENGTH_SHORT).show();
+                }
+            }
+        }
     }
 
     @Override

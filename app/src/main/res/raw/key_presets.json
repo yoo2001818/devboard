@@ -135,7 +135,7 @@
         { "code": -8, "label": "Down", "name": "아래 화살표" },
         { "code": -9, "label": "Left", "name": "왼쪽 회살표" },
         { "code": -10, "label": "Right", "name": "오른쪽 화살표" },
-        { "code": -11, "label": "Settings", "name": "설정" },
+        { "code": -11, "label": "Settings", "name": "설정" }
       ]
     },
     {
