@@ -7,6 +7,8 @@ import java.util.List;
  */
 
 public class KeyLayout {
+    public String name;
+
     public List<List<Key>> layout;
 
     public List<List<Key>> getLayout() {
@@ -15,5 +17,18 @@ public class KeyLayout {
 
     public void setLayout(List<List<Key>> layout) {
         this.layout = layout;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    @Override
+    public String toString() {
+        return this.name == null ? "(현재)" : this.name;
     }
 }

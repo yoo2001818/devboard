@@ -37,7 +37,6 @@ public class DevBoardView extends LinearLayout implements View.OnClickListener, 
             new float[] { 1, 1, 1, 1, 3, 1, 1, 1 },
     };
 
-    private Handler handler;
     private AttributeSet attrs;
     private Listener listener;
     private int height;
@@ -81,6 +80,10 @@ public class DevBoardView extends LinearLayout implements View.OnClickListener, 
     public void setKeyLayout(List<Key> keyLayout) {
         this.keyLayout = keyLayout;
         this.updateLayout();
+    }
+
+    public Button getButton(int pos) {
+        return buttons[pos];
     }
 
     private int getKeyHeight() {
@@ -160,6 +163,47 @@ public class DevBoardView extends LinearLayout implements View.OnClickListener, 
         button.setText(text);
     }
 
+    public void updateButton(int counter, Key key) {
+        switch (key.getLabel()) {
+            case "Shift":
+                setButtonDrawable(buttons[counter], R.drawable.icon_shift);
+                break;
+            case "Locale":
+                setButtonDrawable(buttons[counter], R.drawable.icon_language);
+                break;
+            case "Backspace":
+                setButtonDrawable(buttons[counter], R.drawable.icon_backspace);
+                break;
+            case "Return":
+                setButtonDrawable(buttons[counter], R.drawable.icon_return);
+                break;
+            case "Settings":
+                setButtonDrawable(buttons[counter], R.drawable.icon_option);
+                break;
+            case "Emoji":
+                setButtonDrawable(buttons[counter], R.drawable.icon_emoji);
+                break;
+            case "Tab":
+                setButtonDrawable(buttons[counter], R.drawable.icon_tab);
+                break;
+            case "Up":
+                setButtonDrawable(buttons[counter], R.drawable.icon_up);
+                break;
+            case "Left":
+                setButtonDrawable(buttons[counter], R.drawable.icon_left);
+                break;
+            case "Right":
+                setButtonDrawable(buttons[counter], R.drawable.icon_right);
+                break;
+            case "Down":
+                setButtonDrawable(buttons[counter], R.drawable.icon_down);
+                break;
+            default:
+                setButtonText(buttons[counter], key.getLabel());
+                break;
+        }
+    }
+
     private void updateLayout() {
         // TODO Move to somewhere else
         if (keyLayout == null) {
@@ -174,44 +218,7 @@ public class DevBoardView extends LinearLayout implements View.OnClickListener, 
         List<Key> keys = keyLayout;
         int counter = 0;
         for (Key key : keys) {
-            switch (key.getLabel()) {
-                case "Shift":
-                    setButtonDrawable(buttons[counter], R.drawable.icon_shift);
-                    break;
-                case "Locale":
-                    setButtonDrawable(buttons[counter], R.drawable.icon_language);
-                    break;
-                case "Backspace":
-                    setButtonDrawable(buttons[counter], R.drawable.icon_backspace);
-                    break;
-                case "Return":
-                    setButtonDrawable(buttons[counter], R.drawable.icon_return);
-                    break;
-                case "Option":
-                    setButtonDrawable(buttons[counter], R.drawable.icon_option);
-                    break;
-                case "Emoji":
-                    setButtonDrawable(buttons[counter], R.drawable.icon_emoji);
-                    break;
-                case "Tab":
-                    setButtonDrawable(buttons[counter], R.drawable.icon_tab);
-                    break;
-                case "Up":
-                    setButtonDrawable(buttons[counter], R.drawable.icon_up);
-                    break;
-                case "Left":
-                    setButtonDrawable(buttons[counter], R.drawable.icon_left);
-                    break;
-                case "Right":
-                    setButtonDrawable(buttons[counter], R.drawable.icon_right);
-                    break;
-                case "Down":
-                    setButtonDrawable(buttons[counter], R.drawable.icon_down);
-                    break;
-                default:
-                    setButtonText(buttons[counter], key.getLabel());
-                    break;
-            }
+            updateButton(counter, key);
             counter += 1;
         }
     }

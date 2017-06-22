@@ -609,20 +609,7 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
         vibrateVolume = pref.getInt(VIBRATE_VOLUME, 20);
         currentHeight = pref.getInt(KEY_HEIGHT, 220);
         if (inputView != null) inputView.setHeight(currentHeight);
-        String themeName = pref.getString(THEME, "default");
-        int desiredTheme = R.style.AppTheme;
-        // Separate internal R id and serialized id because R's ID is not portable.
-        switch (themeName) {
-            case "default":
-                desiredTheme = R.style.AppTheme;
-                break;
-            case "white":
-                desiredTheme = R.style.WhiteTheme;
-                break;
-            case "blue":
-                desiredTheme = R.style.BlueTheme;
-                break;
-        }
+        int desiredTheme = ThemeLoader.getTheme(getApplicationContext());
         if (currentTheme != -1 && currentTheme != desiredTheme) {
             // Force update view
             currentTheme = desiredTheme;

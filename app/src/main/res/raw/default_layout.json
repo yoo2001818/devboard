@@ -108,7 +108,7 @@
       { "code": 46, "label": "." },
       { "code": 47, "label": "/" },
       { "code": -2, "label": "Backspace" },
-      { "code": -11, "label": "Option" },
+      { "code": -11, "label": "Settings" },
       { "code": -4, "label": "Fn" },
       { "code": -5, "label": "Fn2" },
       { "code": 0, "label": "Emoji" },

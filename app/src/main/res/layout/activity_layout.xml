@@ -4,9 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    style="@style/AppTheme"
     android:orientation="vertical"
-    tools:context="com.example.devboard.MainActivity">
+    tools:context="com.example.devboard.LayoutActivity">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -21,22 +20,25 @@
             android:spinnerMode="dialog" />
 
         <Button
-            android:id="@+id/button2"
+            android:id="@+id/copyBtn"
+            android:onClick="handleCopy"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="복사" />
 
         <Button
-            android:id="@+id/button3"
+            android:id="@+id/delBtn"
+            android:onClick="handleDelete"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="삭제" />
     </LinearLayout>
 
-    <com.example.devboard.DevBoardView
-        android:id="@+id/devboard"
+    <LinearLayout
+        android:id="@+id/devboardScaffold"
         android:layout_width="match_parent"
-        android:layout_height="220dp" />
+        android:layout_height="wrap_content"
+        android:orientation="vertical" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -44,18 +46,21 @@
         android:orientation="horizontal">
 
         <Button
+            android:id="@+id/normalBtn"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="기본" />
 
         <Button
+            android:id="@+id/fnBtn"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Fn" />
 
         <Button
+            android:id="@+id/fn2Btn"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -68,10 +73,12 @@
         android:layout_weight="1"
         android:orientation="horizontal">
         <ListView
+            android:id="@+id/categoryView"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1" />
         <ListView
+            android:id="@+id/presetView"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1" />
