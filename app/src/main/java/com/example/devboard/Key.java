@@ -6,7 +6,7 @@ import java.util.List;
  * Created by yoo2001818 on 17. 6. 18.
  */
 
-public class Key {
+public class Key implements Cloneable {
     // Since drawable resource ID is not portable, DevBoardView will take care of converting label
     // string to resource ID - it needs to be portable. :/
     String label;

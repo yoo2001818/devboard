@@ -223,6 +223,7 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
         DevBoardView view = new DevBoardView(new ContextThemeWrapper(getApplicationContext(), currentTheme));
         view.setListener(this);
         view.setHeight(currentHeight);
+        view.setKeyLayout(getCurrentLayout());
         inputView = view;
         return view;
     }
@@ -231,6 +232,7 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
         DevBoardView view = new DevBoardView(new ContextThemeWrapper(getApplicationContext(), currentTheme));
         view.setListener(this);
         view.setHeight(currentHeight);
+        view.setKeyLayout(getCurrentLayout());
         inputView = view;
         setInputView(view);
         return view;
@@ -617,6 +619,7 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
         }
         currentTheme = desiredTheme;
         this.placeLayouts();
+        if (inputView != null) inputView.setKeyLayout(getCurrentLayout());
     }
 
     public static DevBoardIME getInstance() {

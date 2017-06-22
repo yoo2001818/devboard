@@ -1,9 +1,11 @@
 package com.example.devboard;
 
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.preference.PreferenceManager;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatDelegate;
@@ -14,9 +16,11 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Spinner;
+import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -111,6 +115,15 @@ public class LayoutActivity extends AppCompatActivity {
         this.loadPresets();
     }
 
+    @Override
+    protected void onPause() {
+        saveLayout();
+        if (DevBoardIME.getInstance() != null) {
+            DevBoardIME.getInstance().loadConfiguration();
+        }
+        super.onPause();
+    }
+
     private void loadLayouts() {
         // :P
         SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
@@ -127,6 +140,8 @@ public class LayoutActivity extends AppCompatActivity {
                 // This shouldn't happen
             }
         }
+        if (currentLayout == null) throw new NullPointerException("current layout is null");
+        currentLayout.setPrimary(true);
         // And... load candidates.
         Type listType = new TypeToken<List<KeyLayout>>(){}.getType();
         layouts = gson.fromJson(pref.getString("layouts", "[]"), listType);
@@ -135,6 +150,25 @@ public class LayoutActivity extends AppCompatActivity {
         spinnerAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, layouts);
         spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(spinnerAdapter);
+        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                if (i != selectedLayoutPos) {
+                    // Okay?
+                    swapLayout(i);
+                    selectedLayout = spinnerAdapter.getItem(0);
+                    selectedLayoutPos = 0;
+                    setPage(0);
+                    spinner.setSelection(0);
+                    spinnerAdapter.notifyDataSetChanged();
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+                // Do nothing
+            }
+        });
         selectedLayoutPos = 0;
         selectedLayout = layouts.get(selectedLayoutPos);
         setPage(0);
@@ -172,11 +206,72 @@ public class LayoutActivity extends AppCompatActivity {
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
                 // Set current preset's value to the key!
                 if (selectedPos == -1) return;
-                Key key = (Key) presetView.getAdapter().getItem(i);
-                currentKeys.set(selectedPos, key);
-                devBoardView.updateButton(selectedPos, key);
+                final Key key = (Key) presetView.getAdapter().getItem(i);
+                if (selectedLayoutPos != 0) {
+                    new AlertDialog.Builder(LayoutActivity.this)
+                            .setMessage("다른 레이아웃을 편집하려면 주 레이아웃을 지금 선택한 레이아웃으로 바꿔야 합니다. 계속 하시겠습니까?")
+                            .setPositiveButton("네", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialogInterface, int i) {
+                                    // Okay?
+                                    swapLayout(selectedLayoutPos);
+                                    selectedLayoutPos = 0;
+                                    setPage(0);
+                                    spinner.setSelection(0);
+                                    spinnerAdapter.notifyDataSetChanged();
+                                    writeKey(selectedPos, key);
+                                }
+                            })
+                            .setNegativeButton("아니요", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialogInterface, int i) {
+
+                                }
+                            }).show();
+                    return;
+                }
+                writeKey(selectedPos, key);
             }
         });
+    }
+
+    private void swapLayout(int target) {
+        KeyLayout targetLayout = layouts.get(target);
+        KeyLayout primaryLayout = layouts.get(0);
+        layouts.set(target, primaryLayout);
+        layouts.set(0, targetLayout);
+        primaryLayout.setPrimary(false);
+        targetLayout.setPrimary(true);
+        spinnerAdapter.notifyDataSetChanged();
+        saveLayout();
+        saveLayouts();
+    }
+
+    private void saveLayout() {
+        SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(this).edit();
+        editor.putString(DevBoardIME.LAYOUT_DATA, gson.toJson(layouts.get(0), KeyLayout.class));
+        editor.apply();
+    }
+
+    private void saveLayouts() {
+        Type listType = new TypeToken<List<KeyLayout>>(){}.getType();
+        List<KeyLayout> saveList = layouts.subList(1, layouts.size());
+        SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(this).edit();
+        editor.putString("layouts", gson.toJson(saveList, listType));
+        editor.apply();
+    }
+
+    private void writeKey(int pos, Key key) {
+        if (key.getCode() == DevBoardIME.KEYCODE_FN) {
+            selectedLayout.getLayout().get(0).set(pos, key);
+            selectedLayout.getLayout().get(1).set(pos, key);
+        }
+        if (key.getCode() == DevBoardIME.KEYCODE_FN2) {
+            selectedLayout.getLayout().get(0).set(pos, key);
+            selectedLayout.getLayout().get(2).set(pos, key);
+        }
+        currentKeys.set(pos, key);
+        devBoardView.updateButton(pos, key);
     }
 
     // Oh no
@@ -205,5 +300,78 @@ public class LayoutActivity extends AppCompatActivity {
                 PorterDuff.Mode.SRC);
         button.invalidate();
         selectedPos = pos;
+    }
+
+    public void handleCopy(View view) {
+        AlertDialog.Builder alert = new AlertDialog.Builder(this);
+        alert.setTitle("레이아웃 복사");
+        alert.setMessage("레이아웃의 이름을 지정해 주세요.");
+
+        // Set an EditText view to get user input
+        final EditText input = new EditText(this);
+        String tmp = selectedLayout.getName();
+        if (tmp == null) tmp = "이름 없음";
+        input.setText(tmp + " 복사");
+        alert.setView(input);
+
+        alert.setPositiveButton("복사", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int whichButton) {
+                String value = input.getText().toString();
+                try {
+                    KeyLayout newLayout = selectedLayout.clone();
+                    newLayout.setName(value);
+                    newLayout.setPrimary(true);
+                    selectedLayout.setPrimary(false);
+                    layouts.add(0, newLayout);
+                    selectedLayout = newLayout;
+                    selectedLayoutPos = 0;
+                    spinnerAdapter.notifyDataSetChanged();
+                    spinner.setSelection(selectedLayoutPos);
+                    setPage(0);
+                    saveLayout();
+                    saveLayouts();
+                } catch (CloneNotSupportedException e) {
+                    // This shouldn't happen.
+                    Log.e("LayoutActivity", e.toString());
+                }
+                return;
+            }
+        });
+
+        alert.setNegativeButton("취소", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int which) {
+                return;
+            }
+        });
+        alert.show();
+    }
+
+    public void handleDelete(View view) {
+        if (selectedLayoutPos == 0) {
+            Toast.makeText(this, "주 레이아웃은 삭제할 수 없습니다.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        AlertDialog.Builder alert = new AlertDialog.Builder(this);
+        alert.setTitle("레이아웃 삭제");
+        alert.setMessage("정말 레이아웃 " + selectedLayout.toString() + "을(를) 삭제하시겠습니까?");
+
+        alert.setPositiveButton("삭제", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int which) {
+                layouts.remove(selectedLayoutPos);
+                selectedLayoutPos -= 1;
+                selectedLayout = layouts.get(selectedLayoutPos);
+                spinnerAdapter.notifyDataSetChanged();
+                spinner.setSelection(selectedLayoutPos);
+                setPage(0);
+                saveLayouts();
+            }
+        });
+
+        alert.setNegativeButton("취소", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int which) {
+                return;
+            }
+        });
+        alert.show();
     }
 }
