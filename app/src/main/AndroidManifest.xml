@@ -19,6 +19,8 @@
             </intent-filter>
         </activity>
 
+        <activity android:name=".MainActivity" />
+
         <service
             android:name=".DevBoardIME"
             android:label="@string/app_name"

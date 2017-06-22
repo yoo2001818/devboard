@@ -10,8 +10,8 @@
         android:title="레이아웃">
         <intent
             android:action="android.intent.action.VIEW"
-            android:targetPackage="my.notifier.ui"
-            android:targetClass="my.notifier.ui.EditCoursesNamesActivity" />
+            android:targetPackage="com.example.devboard"
+            android:targetClass="com.example.devboard.MainActivity" />
     </Preference>
 
     <!-- NOTE: EditTextPreference accepts EditText attributes. -->
