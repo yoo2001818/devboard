@@ -51,6 +51,7 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
     public static final int KEYCODE_FN = -4;
     public static final int KEYCODE_FN2 = -5;
     public static final int KEYCODE_MULTIPLE = -6;
+    public static final int KEYCODE_SINGLE = -12;
 
     public static final int KEYCODE_UP = -7;
     public static final int KEYCODE_DOWN = -8;
@@ -530,6 +531,12 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
                 // Remove N characters and add as current. Easy?
                 composeQueue.setLength(composeQueue.length() - previous.length());
                 composeQueue.append(current);
+                ic.setComposingText(composeQueue, 1);
+                break;
+            case KEYCODE_SINGLE:
+                commitIME();
+                String a = key.getExtra().get(0);
+                composeQueue.append(a);
                 ic.setComposingText(composeQueue, 1);
                 break;
             case '\t':

@@ -111,7 +111,7 @@
       { "code": -11, "label": "Settings" },
       { "code": -4, "label": "Fn" },
       { "code": -5, "label": "Fn2" },
-      { "code": 0, "label": "Emoji" },
+      { "code": 0, "label": "" },
       { "code": 32, "label": " " },
       { "code": -5, "label": "Fn2" },
       { "code": -4, "label": "Fn" },

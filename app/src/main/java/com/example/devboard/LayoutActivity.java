@@ -11,6 +11,8 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatDelegate;
 import android.util.Log;
 import android.view.ContextThemeWrapper;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -31,6 +33,8 @@ import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class LayoutActivity extends AppCompatActivity {
@@ -261,7 +265,87 @@ public class LayoutActivity extends AppCompatActivity {
         editor.apply();
     }
 
-    private void writeKey(int pos, Key key) {
+    private void askText(String name, String value, final TextResultListener listener) {
+        AlertDialog.Builder alert = new AlertDialog.Builder(this);
+        alert.setTitle(name);
+        alert.setMessage(value);
+
+        final EditText input = new EditText(this);
+        alert.setView(input);
+
+        alert.setPositiveButton("확인", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                listener.run(input.getText().toString());
+            }
+        });
+
+        alert.setNegativeButton("취소", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int which) {
+            }
+        });
+        alert.show();
+    }
+
+    private void writeKey(final int pos, Key key) {
+        if (key.getCode() == -10000) {
+            // Dictionary key
+            askText("관용구 키", "누르면 입력할 관용구를 입력해 주세요.", new TextResultListener() {
+                @Override
+                public void run(final String value) {
+                    askText("관용구 키", "키의 이름을 입력해 주세요.", new TextResultListener() {
+                        @Override
+                        public void run(String name) {
+                            Key key = new Key(name, DevBoardIME.KEYCODE_SINGLE, Arrays.asList(value));
+                            writeKey(pos, key);
+                        }
+                    });
+                }
+            });
+            return;
+        }
+        if (key.getCode() == -10001) {
+            // Dictionary list key
+            askText("관용구 집합 키", "누르면 입력할 관용구들을 ,로 구분해서 입력해 주세요.", new TextResultListener() {
+                @Override
+                public void run(final String value) {
+                    final List<String> values = Arrays.asList(value.split(","));
+                    for (int i = 0; i < values.size(); ++i) {
+                        values.set(i, values.get(i).trim());
+                    }
+                    askText("관용구 집합 키", "키의 이름을 입력해 주세요.", new TextResultListener() {
+                        @Override
+                        public void run(String name) {
+                            Key key = new Key(name, DevBoardIME.KEYCODE_MULTIPLE, values);
+                            writeKey(pos, key);
+                        }
+                    });
+                }
+            });
+            return;
+        }
+        if (key.getCode() == -10002) {
+            // Character list key
+            askText("글자 집합 키", "누르면 입력할 글자들을 입력해 주세요.", new TextResultListener() {
+                @Override
+                public void run(final String value) {
+                    String[] values = new String[value.length()];
+                    for(int i = 0; i < values.length; i++)
+                    {
+                        values[i] = String.valueOf(value.charAt(i));
+                    }
+                    final List<String> valuesList = Arrays.asList(values);
+                    askText("글자 집합 키", "키의 이름을 입력해 주세요.", new TextResultListener() {
+                        @Override
+                        public void run(String name) {
+                            Key key = new Key(name, DevBoardIME.KEYCODE_MULTIPLE, valuesList);
+                            writeKey(pos, key);
+                        }
+                    });
+                }
+            });
+            return;
+        }
         if (key.getCode() == DevBoardIME.KEYCODE_FN) {
             selectedLayout.getLayout().get(0).set(pos, key);
             selectedLayout.getLayout().get(1).set(pos, key);
@@ -302,7 +386,7 @@ public class LayoutActivity extends AppCompatActivity {
         selectedPos = pos;
     }
 
-    public void handleCopy(View view) {
+    public void handleCopy() {
         AlertDialog.Builder alert = new AlertDialog.Builder(this);
         alert.setTitle("레이아웃 복사");
         alert.setMessage("레이아웃의 이름을 지정해 주세요.");
@@ -346,11 +430,7 @@ public class LayoutActivity extends AppCompatActivity {
         alert.show();
     }
 
-    public void handleDelete(View view) {
-        if (selectedLayoutPos == 0) {
-            Toast.makeText(this, "주 레이아웃은 삭제할 수 없습니다.", Toast.LENGTH_SHORT).show();
-            return;
-        }
+    public void handleDelete() {
         AlertDialog.Builder alert = new AlertDialog.Builder(this);
         alert.setTitle("레이아웃 삭제");
         alert.setMessage("정말 레이아웃 " + selectedLayout.toString() + "을(를) 삭제하시겠습니까?");
@@ -358,11 +438,13 @@ public class LayoutActivity extends AppCompatActivity {
         alert.setPositiveButton("삭제", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
                 layouts.remove(selectedLayoutPos);
-                selectedLayoutPos -= 1;
-                selectedLayout = layouts.get(selectedLayoutPos);
+                selectedLayoutPos = 0;
+                selectedLayout = layouts.get(0);
+                selectedLayout.setPrimary(true);
                 spinnerAdapter.notifyDataSetChanged();
                 spinner.setSelection(selectedLayoutPos);
                 setPage(0);
+                saveLayout();
                 saveLayouts();
             }
         });
@@ -373,5 +455,42 @@ public class LayoutActivity extends AppCompatActivity {
             }
         });
         alert.show();
+    }
+
+    public void handleImport() {
+
+    }
+
+    public void handleExport() {
+
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_layout, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.copyBtn:
+                handleCopy();
+                return true;
+            case R.id.deleteBtn:
+                handleDelete();
+                return true;
+            case R.id.importBtn:
+                handleImport();
+                return true;
+            case R.id.exportBtn:
+                handleExport();
+                return true;
+        }
+        return false;
+    }
+
+    private interface TextResultListener {
+        public void run(String result);
     }
 }

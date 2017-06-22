@@ -136,7 +136,16 @@
         { "code": -9, "label": "Left", "name": "왼쪽 회살표" },
         { "code": -10, "label": "Right", "name": "오른쪽 화살표" },
         { "code": -11, "label": "Settings", "name": "설정" },
-        { "code": 0, "label": "Emoji", "name": "이모지" }
+      ]
+    },
+    {
+      "name": "기타",
+      "entries": [
+        { "code": -10000, "label": "", "name": "관용구 키..." },
+        { "code": -10001, "label": "", "name": "관용구 집합..." },
+        { "code": -10002, "label": "", "name": "글자 집합..." },
+        { "code": -6, "label": ".,", "extra": [".", ","] },
+        { "code": -6, "label": ".,?!", "extra": [".", ",", "?", "!"] }
       ]
     }
   ]

@@ -7,32 +7,11 @@
     android:orientation="vertical"
     tools:context="com.example.devboard.LayoutActivity">
 
-    <LinearLayout
+    <Spinner
+        android:id="@+id/spinner"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
-
-        <Spinner
-            android:id="@+id/spinner"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:spinnerMode="dialog" />
-
-        <Button
-            android:id="@+id/copyBtn"
-            android:onClick="handleCopy"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="복사" />
-
-        <Button
-            android:id="@+id/delBtn"
-            android:onClick="handleDelete"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="삭제" />
-    </LinearLayout>
+        android:layout_height="48dp"
+        android:spinnerMode="dialog" />
 
     <LinearLayout
         android:id="@+id/devboardScaffold"
