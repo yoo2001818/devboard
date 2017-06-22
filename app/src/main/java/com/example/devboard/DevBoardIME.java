@@ -560,6 +560,7 @@ public class DevBoardIME extends InputMethodService implements DevBoardView.List
                 commitIME();
                 commitTyped(ic);
                 Intent intent = new Intent(getApplicationContext(), SettingsActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(intent);
                 break;
             default:

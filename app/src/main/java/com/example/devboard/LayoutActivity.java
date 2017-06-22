@@ -441,6 +441,10 @@ public class LayoutActivity extends AppCompatActivity {
     }
 
     public void handleDelete() {
+        if (layouts.size() <= 2) {
+            Toast.makeText(this, "삭제할 레이아웃이 없습니다!", Toast.LENGTH_SHORT).show();
+            return;
+        }
         AlertDialog.Builder alert = new AlertDialog.Builder(this);
         alert.setTitle("레이아웃 삭제");
         alert.setMessage("정말 레이아웃 " + selectedLayout.toString() + "을(를) 삭제하시겠습니까?");
